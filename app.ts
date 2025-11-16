@@ -3,6 +3,7 @@ import morgan from "morgan";
 import cors from "cors";
 import helmet from "helmet";
 import userRoutes from "./src/routes/user.routes";
+import authRoutes from "./src/routes/auth.routes";
 
 const app: Application = express();
 
@@ -13,6 +14,7 @@ app.use(helmet());
 app.use(morgan("dev"));
 
 // Routes
+app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 
 // Health check

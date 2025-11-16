@@ -1,8 +1,13 @@
 import Router from "express";
-import { register } from "../controllers/user.controller";
+import {
+  handleGetAllUser,
+  handleGetUserById,
+} from "../controllers/user.controller";
+import { authToken } from "../middleware/authMiddleware";
 
 const router = Router();
 
-router.post("/register", register);
+router.get("/", authToken, handleGetAllUser);
+router.get("/:id", authToken, handleGetUserById);
 
 export default router;

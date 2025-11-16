@@ -1,26 +1,25 @@
 import { Request, Response } from "express";
 import * as userService from "../services/user.service";
 
-export const register = async (req: Request, res: Response) => {
+export const handleGetAllUser = async (req: Request, res: Response) => {
   try {
-    // console.log("📥 Register body:", req.body);
-    const { firstName, lastName, email, password } = req.body;
-    const user = await userService.registerUser(
-      firstName,
-      lastName,
-      email,
-      password
-    );
-
-    const userObj =
-      typeof user.toObject === "function" ? user.toObject() : user;
-    delete userObj.password;
-    // console.log("✅ User saved:", user); // cek berhasil save
-    res
-      .status(201)
-      .json({ message: "User registered successfully", data: userObj });
+    const users = await userService.getAllUser();
+    res.json(users);
   } catch (error: any) {
-    // console.error("❌ Register error:", error);
-    res.status(400).json({ error: error.message });
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const handleGetUserById = async (req: Request, res: Response) => {
+  try {
+    const user = await userService.getUserById(req.params.id);
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    res.json(user);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
   }
 };
