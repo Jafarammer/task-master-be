@@ -4,6 +4,7 @@ import cors from "cors";
 import helmet from "helmet";
 import userRoutes from "./src/routes/user.routes";
 import authRoutes from "./src/routes/auth.routes";
+import taskRoutes from "./src/routes/task.routes";
 
 const app: Application = express();
 
@@ -16,6 +17,7 @@ app.use(morgan("dev"));
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/task", taskRoutes);
 
 // Health check
 app.get("/health", (_req, res) => {
