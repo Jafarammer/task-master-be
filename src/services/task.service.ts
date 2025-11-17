@@ -1,5 +1,5 @@
 import Task, { ITask } from "../models/task.model";
-import { Types } from "mongoose";
+import mongoose, { Types } from "mongoose";
 
 interface IServiceResult {
   error?: boolean;
@@ -49,6 +49,72 @@ export const createTask = async (
 
     return { data: newTask };
   } catch (error: any) {
+    return { error: true, code: 500, message: "Internal server error" };
+  }
+};
+
+export const updateTask = async (
+  id: string,
+  user_id: Types.ObjectId | string | undefined,
+  title?: string,
+  description?: string,
+  due_date?: Date | string,
+  priority?: string,
+  is_completed?: boolean
+): Promise<IServiceResult> => {
+  try {
+    if (!id || !mongoose.isValidObjectId(String(id))) {
+      return { error: true, code: 400, message: "Invalid or missing id" };
+    }
+
+    const updates: any = {};
+
+    if (title !== undefined) updates.title = title;
+    if (description !== undefined) updates.description = description;
+    if (due_date !== undefined) {
+      const dueDateObj =
+        typeof due_date === "string" ? new Date(due_date) : due_date;
+      if (!dueDateObj || isNaN(dueDateObj.getTime())) {
+        return { error: true, code: 400, message: "Invalid due date format" };
+      }
+      updates.due_date = dueDateObj;
+    }
+    if (priority !== undefined) {
+      const allowed: string[] = ["low", "medium", "high"];
+      if (!allowed.includes(priority)) {
+        return {
+          error: true,
+          code: 400,
+          message: `priority must be one of ${allowed.join(", ")}`,
+        };
+      }
+      updates.priority = priority;
+    }
+    if (is_completed !== undefined)
+      updates.is_completed = Boolean(is_completed);
+
+    const query: any = { _id: id, deleted_at: null };
+
+    if (user_id) {
+      if (typeof user_id === "string" && mongoose.isValidObjectId(user_id)) {
+        query.user_id = new Types.ObjectId(user_id);
+      } else if (user_id instanceof Types.ObjectId) {
+        query.user_id = user_id;
+      }
+    }
+
+    const updatedTask = await Task.findOneAndUpdate(
+      query,
+      { $set: updates },
+      { new: true }
+    ).exec();
+
+    if (!updatedTask) {
+      return { error: true, code: 404, message: "Task not found" };
+    }
+
+    return { data: updatedTask };
+  } catch (error) {
     return { error: true, code: 500, message: "Internal server error" };
   }
 };
