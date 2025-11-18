@@ -6,6 +6,15 @@ interface IServiceResult {
   code?: number;
   message?: string;
   data?: ITask | null;
+  pagination?: object;
+}
+
+interface IGetTaskParams {
+  user_id: Types.ObjectId | string | undefined;
+  page?: number;
+  limit?: number;
+  sort_by?: string;
+  order?: "asc" | "desc";
 }
 
 export const createTask = async (
@@ -114,6 +123,39 @@ export const updateTask = async (
     }
 
     return { data: updatedTask };
+  } catch (error) {
+    return { error: true, code: 500, message: "Internal server error" };
+  }
+};
+
+export const getTask = async ({
+  user_id,
+  page = 1,
+  limit = 10,
+  sort_by = "createdAt",
+  order = "desc",
+}: IGetTaskParams): Promise<IServiceResult> => {
+  try {
+    const skip: number = (page - 1) * limit;
+    const sortOption: any = {};
+    sortOption[sort_by] = order === "asc" ? 1 : -1;
+
+    const [tasks, total] = await Promise.all([
+      Task.find({ user_id, deleted_at: null })
+        .sort(sortOption)
+        .skip(skip)
+        .limit(limit),
+      Task.countDocuments({ user_id, deleted_at: null }),
+    ]);
+    return {
+      data: tasks,
+      pagination: {
+        page,
+        limit,
+        total,
+        total_pages: Math.ceil(total / limit),
+      },
+    } as unknown as IServiceResult;
   } catch (error) {
     return { error: true, code: 500, message: "Internal server error" };
   }
