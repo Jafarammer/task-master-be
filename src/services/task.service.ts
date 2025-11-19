@@ -17,6 +17,15 @@ interface IGetTaskParams {
   order?: "asc" | "desc";
 }
 
+interface ISearchTaskParams {
+  user_id: Types.ObjectId | string | undefined;
+  query: string;
+  page?: number;
+  limit?: number;
+  sort_by?: string;
+  order?: "asc" | "desc";
+}
+
 export const createTask = async (
   user_id: Types.ObjectId | string,
   title: string,
@@ -147,6 +156,51 @@ export const getTask = async ({
         .limit(limit),
       Task.countDocuments({ user_id, deleted_at: null }),
     ]);
+    return {
+      data: tasks,
+      pagination: {
+        page,
+        limit,
+        total,
+        total_pages: Math.ceil(total / limit),
+      },
+    } as unknown as IServiceResult;
+  } catch (error) {
+    return { error: true, code: 500, message: "Internal server error" };
+  }
+};
+
+export const searchTask = async ({
+  user_id,
+  query,
+  page = 1,
+  limit = 10,
+  sort_by = "createdAt",
+  order = "desc",
+}: ISearchTaskParams): Promise<IServiceResult> => {
+  try {
+    if (!user_id) {
+      return { error: true, code: 404, message: "Unauthorized user." };
+    }
+
+    const skip: number = (page - 1) * limit;
+    const sortOption: any = {};
+    sortOption[sort_by] = order === "asc" ? 1 : -1;
+
+    const searchFilter: Record<string, unknown> = {
+      user_id,
+      deleted_at: null,
+      $or: [
+        { title: { $regex: query, $options: "i" } },
+        { description: { $regex: query, $options: "i" } },
+      ],
+    };
+
+    const [tasks, total] = await Promise.all([
+      Task.find(searchFilter).sort(sortOption).skip(skip).limit(limit),
+      Task.countDocuments(searchFilter),
+    ]);
+
     return {
       data: tasks,
       pagination: {

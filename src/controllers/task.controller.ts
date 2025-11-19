@@ -64,3 +64,38 @@ export const handleGetTask = async (req: Request, res: Response) => {
     .status(201)
     .json({ data: result.data, meta_data: result.pagination });
 };
+
+export const handleSearchTask = async (req: Request, res: Response) => {
+  const user_id: string = (req as any).user?.id;
+  const query: string = req.query.q ? String(req.query.q) : "";
+  const page: number | undefined = req.query.page
+    ? Number(req.query.page)
+    : undefined;
+  const limit: number | undefined = req.query.limit
+    ? Number(req.query.limit)
+    : undefined;
+  const sort_by: string | undefined = req.query.sort_by
+    ? String(req.query.sort_by)
+    : undefined;
+  const order: "asc" | "desc" | undefined =
+    req.query.order === "asc" || req.query.order === "desc"
+      ? (req.query.order as "asc" | "desc")
+      : undefined;
+
+  const result = await taskService.searchTask({
+    user_id,
+    query,
+    page,
+    limit,
+    sort_by,
+    order,
+  });
+
+  if (result.error) {
+    res.status(result.code).json({ message: result.message });
+  }
+
+  return res
+    .status(201)
+    .json({ data: result.data, meta_data: result.pagination });
+};
