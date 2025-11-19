@@ -16,7 +16,7 @@ export const handleCreateTask = async (req: Request, res: Response) => {
   if (task.error) {
     return res.status(task.code).json({ message: task.message });
   }
-  return res.status(201).json({ data: task, message: "Create task success" });
+  return res.status(201).json({ data: task });
 };
 
 export const handleUpdateTask = async (req: Request, res: Response) => {
@@ -98,4 +98,20 @@ export const handleSearchTask = async (req: Request, res: Response) => {
   return res
     .status(201)
     .json({ data: result.data, meta_data: result.pagination });
+};
+
+export const handleDeleteTask = async (req: Request, res: Response) => {
+  const user_id: string = (req as any).user?.id;
+  const { task_id } = req.params;
+
+  const result = await taskService.deleteTask(user_id, task_id);
+
+  if (result.error) {
+    return res.status(result.code).json({ message: result.message });
+  }
+
+  return res.status(201).json({
+    data: result.data,
+    message: result.message,
+  });
 };

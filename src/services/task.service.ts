@@ -5,7 +5,7 @@ interface IServiceResult {
   error?: boolean;
   code?: number;
   message?: string;
-  data?: ITask | null;
+  data?: ITask | ITask[] | null;
   pagination?: object;
 }
 
@@ -65,7 +65,7 @@ export const createTask = async (
       priority: prio,
     });
 
-    return { data: newTask };
+    return { data: newTask, message: "Create task success" };
   } catch (error: any) {
     return { error: true, code: 500, message: "Internal server error" };
   }
@@ -210,6 +210,61 @@ export const searchTask = async ({
         total_pages: Math.ceil(total / limit),
       },
     } as unknown as IServiceResult;
+  } catch (error) {
+    return { error: true, code: 500, message: "Internal server error" };
+  }
+};
+
+export const deleteTask = async (
+  user_id: string,
+  task_id: string
+): Promise<IServiceResult> => {
+  try {
+    if (!user_id || !task_id) {
+      return {
+        error: true,
+        code: 400,
+        message: "user_id and task_id are required.",
+      };
+    }
+
+    const task = await Task.findOne({
+      _id: task_id,
+      user_id,
+      deleted_at: null,
+    } satisfies {
+      _id: string;
+      user_id: string;
+      deleted_at: null;
+    });
+
+    if (!task) {
+      return {
+        error: true,
+        code: 404,
+        message: "Task not found or already deleted.",
+      };
+    }
+
+    // soft deleted
+    task.deleted_at = new Date();
+    await task.save();
+
+    // get remaining task
+    const remainingTasks = await Task.find({
+      user_id,
+      deleted_at: null,
+    } satisfies {
+      user_id: string;
+      deleted_at: null;
+    })
+      .sort({ createdAt: -1 })
+      .exec();
+
+    return {
+      data: remainingTasks,
+      message: "Task deleted successfully.",
+    };
   } catch (error) {
     return { error: true, code: 500, message: "Internal server error" };
   }
