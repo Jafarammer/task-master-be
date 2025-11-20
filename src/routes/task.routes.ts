@@ -9,6 +9,7 @@ import {
   handleRestoreTask,
   handleHardDelete,
   handleTaskUpdateStatus,
+  handleGetTaskCompleted,
 } from "../controllers/task.controller";
 
 const router = Router();
@@ -21,5 +22,6 @@ router.delete("/soft/:task_id", authToken, handleSoftDeleteTask);
 router.delete("/hard/:task_id", authToken, handleHardDelete);
 router.patch("/restore/:task_id", authToken, handleRestoreTask);
 router.patch("/status/:task_id", authToken, handleTaskUpdateStatus);
+router.get("/completed", authToken, handleGetTaskCompleted);
 
 export default router;
