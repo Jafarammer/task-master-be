@@ -314,3 +314,44 @@ export const restoreTask = async (
     return { error: true, code: 500, message: "Internal server error" };
   }
 };
+
+export const hardDeleteTask = async (
+  user_id: string,
+  task_id: string
+): Promise<IServiceResult> => {
+  try {
+    if (!user_id || !task_id) {
+      return {
+        error: true,
+        code: 400,
+        message: "user_id and task_id are required.",
+      };
+    }
+
+    if (
+      !mongoose.isValidObjectId(user_id) ||
+      !mongoose.isValidObjectId(task_id)
+    ) {
+      return { error: true, code: 400, message: "Invalid id format" };
+    }
+
+    const query = {
+      _id: new Types.ObjectId(task_id),
+      user_id: new Types.ObjectId(user_id),
+    };
+
+    const deleted = await Task.findOneAndDelete(query).exec();
+
+    if (!deleted) {
+      return {
+        error: true,
+        code: 404,
+        message: "Task not found or already deleted.",
+      };
+    }
+
+    return { message: "Task permanently deleted successfully." };
+  } catch (error) {
+    return { error: true, code: 500, message: "Internal server error" };
+  }
+};

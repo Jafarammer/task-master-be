@@ -128,3 +128,17 @@ export const handleRestoreTask = async (req: Request, res: Response) => {
 
   return res.status(200).json({ data: result.data, message: result.message });
 };
+
+export const handleHardDelete = async (req: Request, res: Response) => {
+  const user_id: string = (req as any).user?.id;
+  const { task_id } = req.params;
+  console.info("xxxxx", task_id);
+
+  const result = await taskService.hardDeleteTask(user_id, task_id);
+
+  if (result.error) {
+    return res.status(result.code).json({ message: result.message });
+  }
+
+  return res.status(200).json({ message: result.message });
+};
