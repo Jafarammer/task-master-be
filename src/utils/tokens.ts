@@ -7,6 +7,6 @@ export interface AccessPayload extends JwtPayload {
 
 export const createAccessToken = (payload: AccessPayload): string => {
   return jwt.sign(payload, process.env.JWT_SECRET, {
-    expiresIn: "60m",
+    expiresIn: "1d",
   });
 };

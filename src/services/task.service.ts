@@ -355,3 +355,56 @@ export const hardDeleteTask = async (
     return { error: true, code: 500, message: "Internal server error" };
   }
 };
+
+export const updateTaskStatus = async (
+  user_id: string,
+  task_id: string,
+  is_completed: boolean
+): Promise<IServiceResult> => {
+  try {
+    if (!user_id || !task_id) {
+      return {
+        error: true,
+        code: 400,
+        message: "user_id and task_id are required.",
+      };
+    }
+
+    if (
+      !mongoose.isValidObjectId(user_id) ||
+      !mongoose.isValidObjectId(task_id)
+    ) {
+      return { error: true, code: 400, message: "Invalid id format." };
+    }
+
+    if (typeof is_completed !== "boolean") {
+      return {
+        error: true,
+        code: 400,
+        message: "is_completed must be a boolean (true/false).",
+      };
+    }
+
+    const query = {
+      _id: new Types.ObjectId(task_id),
+      user_id: new Types.ObjectId(user_id),
+      deleted_at: null,
+    };
+
+    const updated = await Task.findOneAndUpdate(
+      query,
+      {
+        is_completed,
+      },
+      { new: true }
+    );
+
+    if (!updated) {
+      return { error: true, code: 404, message: "Task not found." };
+    }
+
+    return { data: updated, message: "Task status updated successfully." };
+  } catch (error) {
+    return { error: true, code: 500, message: "Internal server error" };
+  }
+};
