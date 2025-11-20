@@ -100,11 +100,11 @@ export const handleSearchTask = async (req: Request, res: Response) => {
     .json({ data: result.data, meta_data: result.pagination });
 };
 
-export const handleDeleteTask = async (req: Request, res: Response) => {
+export const handleSoftDeleteTask = async (req: Request, res: Response) => {
   const user_id: string = (req as any).user?.id;
   const { task_id } = req.params;
 
-  const result = await taskService.deleteTask(user_id, task_id);
+  const result = await taskService.softDeleteTask(user_id, task_id);
 
   if (result.error) {
     return res.status(result.code).json({ message: result.message });
@@ -114,4 +114,17 @@ export const handleDeleteTask = async (req: Request, res: Response) => {
     data: result.data,
     message: result.message,
   });
+};
+
+export const handleRestoreTask = async (req: Request, res: Response) => {
+  const user_id: string = (req as any).user?.id;
+  const { task_id } = req.params;
+
+  const result = await taskService.restoreTask(user_id, task_id);
+
+  if (result.error) {
+    return res.status(result.code).json({ message: result.message });
+  }
+
+  return res.status(200).json({ data: result.data, message: result.message });
 };

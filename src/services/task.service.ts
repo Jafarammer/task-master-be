@@ -215,7 +215,7 @@ export const searchTask = async ({
   }
 };
 
-export const deleteTask = async (
+export const softDeleteTask = async (
   user_id: string,
   task_id: string
 ): Promise<IServiceResult> => {
@@ -265,6 +265,51 @@ export const deleteTask = async (
       data: remainingTasks,
       message: "Task deleted successfully.",
     };
+  } catch (error) {
+    return { error: true, code: 500, message: "Internal server error" };
+  }
+};
+
+export const restoreTask = async (
+  user_id: string,
+  task_id: string
+): Promise<IServiceResult> => {
+  try {
+    if (!user_id || !task_id) {
+      return {
+        error: true,
+        code: 400,
+        message: "user_id and task_id are required.",
+      };
+    }
+
+    if (
+      !mongoose.isValidObjectId(user_id) ||
+      !mongoose.isValidObjectId(task_id)
+    ) {
+      return { error: true, code: 400, message: "Invalid id format" };
+    }
+
+    const query = {
+      _id: new Types.ObjectId(task_id),
+      user_id: new Types.ObjectId(user_id),
+      deleted_at: { $ne: null },
+    };
+
+    const task = await Task.findOne(query).exec();
+
+    if (!task) {
+      return {
+        error: true,
+        code: 404,
+        message: "Task not found or not deleted.",
+      };
+    }
+
+    task.deleted_at = null;
+    await task.save();
+
+    return { data: task, message: "Task restored successfully." };
   } catch (error) {
     return { error: true, code: 500, message: "Internal server error" };
   }
