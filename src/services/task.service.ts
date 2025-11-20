@@ -450,3 +450,45 @@ export const getTaskCompleted = async ({
     return { error: true, code: 500, message: "Internal server error" };
   }
 };
+
+export const getTaskPending = async ({
+  user_id,
+  page = 1,
+  limit = 5,
+  sort_by = "createdAt",
+  order = "desc",
+}: IGetTaskParams): Promise<IServiceResult> => {
+  try {
+    if (!user_id) {
+      return { error: true, code: 400, message: '"user_id is required."' };
+    }
+
+    if (!mongoose.isValidObjectId(user_id)) {
+      return { error: true, code: 400, message: "Invalid format id" };
+    }
+
+    const skip: number = (page - 1) * limit;
+    const sortOption: any = {};
+    sortOption[sort_by] = order === "asc" ? 1 : -1;
+
+    const [tasks, total] = await Promise.all([
+      Task.find({ user_id, is_completed: false, deleted_at: null })
+        .sort(sortOption)
+        .skip(skip)
+        .limit(limit),
+      Task.countDocuments({ user_id, is_completed: false, deleted_at: null }),
+    ]);
+
+    return {
+      data: tasks,
+      pagination: {
+        page,
+        limit,
+        total,
+        total_pages: Math.ceil(total / limit),
+      },
+    } as unknown as IServiceResult;
+  } catch (error) {
+    return { error: true, code: 500, message: "Internal server error" };
+  }
+};

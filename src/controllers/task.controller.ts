@@ -44,7 +44,7 @@ export const handleUpdateTask = async (req: Request, res: Response) => {
 export const handleGetTask = async (req: Request, res: Response) => {
   const user_id: string = (req as any).user?.id;
   const page: number = Number(req.query.page) || 1;
-  const limit: number = Number(req.query.limit) || 10;
+  const limit: number = Number(req.query.limit) || 5;
   const sort_by: string = String(req.query.sort_by || "createdAt");
   const order = req.query.order === "asc" ? "asc" : "desc";
 
@@ -163,11 +163,35 @@ export const handleTaskUpdateStatus = async (req: Request, res: Response) => {
 export const handleGetTaskCompleted = async (req: Request, res: Response) => {
   const user_id: string = (req as any).user?.id;
   const page: number = Number(req.query.page) || 1;
-  const limit: number = Number(req.query.limit) || 10;
+  const limit: number = Number(req.query.limit) || 5;
   const sort_by: string = String(req.query.sort_by) || "createdAt";
   const order: "asc" | "desc" = req.query.order === "asc" ? "asc" : "desc";
 
   const result = await taskService.getTaskCompleted({
+    user_id,
+    page,
+    limit,
+    sort_by,
+    order,
+  });
+
+  if (result.error) {
+    return res.status(result.code).json({ message: result.message });
+  }
+
+  return res
+    .status(201)
+    .json({ data: result.data, meta_data: result.pagination });
+};
+
+export const handleGetTaskPending = async (req: Request, res: Response) => {
+  const user_id: string = (req as any).user?.id;
+  const page: number = Number(req.query.page) || 1;
+  const limit: number = Number(req.query.limit) || 5;
+  const sort_by: string = String(req.query.sort_by) || "createdAt";
+  const order: "asc" | "desc" = req.query.order === "asc" ? "asc" : "desc";
+
+  const result = await taskService.getTaskPending({
     user_id,
     page,
     limit,
