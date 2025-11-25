@@ -1,47 +1,73 @@
 import bcrypt from "bcrypt";
 import User, { IUser } from "../models/user.model";
 import { createAccessToken, AccessPayload } from "../utils/tokens";
+import { RegisterPayload } from "../types/auth";
+import { validateRegister } from "../helpers/auth.helper";
+
+interface IServiceResult {
+  token?: string;
+  error?: boolean;
+  code?: number;
+  message?: string;
+  data?: IUser | IUser[] | null;
+}
 
 export const registerUser = async (
-  firstName: string,
-  lastName: string,
-  email: string,
-  password: string
-): Promise<IUser> => {
-  const existing = await User.findOne({ email: email });
-  if (existing) throw new Error("Email already registered");
+  payload: RegisterPayload
+): Promise<IServiceResult> => {
+  try {
+    const existing = await User.findOne({ email: payload.email });
+    if (existing) {
+      return { error: true, code: 409, message: "Email already registered" };
+    }
 
-  const hashedPassord = await bcrypt.hash(password, 10);
-  const user = new User({
-    first_name: firstName,
-    last_name: lastName,
-    email: email,
-    password: hashedPassord,
-  });
+    const resultValidation = validateRegister(payload);
+    if (!resultValidation.valid) {
+      return { error: true, code: 400, message: resultValidation.message };
+    }
 
-  await user.save();
+    const hashedPassord = await bcrypt.hash(payload.password, 10);
+    const user = new User({
+      first_name: payload.firstName,
+      last_name: payload.lastName,
+      email: payload.email,
+      password: hashedPassord,
+    });
 
-  return user;
+    await user.save();
+
+    return { message: "Registered successfully" };
+  } catch (error) {
+    return { error: true, code: 500, message: "Internal server error" };
+  }
 };
 
 export const loginUser = async (
   email: string,
   password: string
-): Promise<{ accessToken: string; user: IUser }> => {
-  const user = await User.findOne({ email });
+): Promise<IServiceResult> => {
+  try {
+    const user = await User.findOne({ email });
 
-  if (!user) throw new Error("Invalid email");
+    if (!user) {
+      return { error: true, code: 400, message: "Invalid email" };
+    }
 
-  const match = await bcrypt.compare(password, user.password);
+    const match = await bcrypt.compare(password, user.password);
 
-  if (!match) throw new Error("Invalid password");
+    if (!match) {
+      return { error: true, code: 400, message: "Invalid password" };
+    }
 
-  const payload: AccessPayload = {
-    id: user._id.toString(),
-    email: user.email,
-  };
+    const payload: AccessPayload = {
+      id: user._id.toString(),
+      email: user.email,
+    };
 
-  const accessToken = createAccessToken(payload);
+    const accessToken = createAccessToken(payload);
 
-  return { accessToken, user };
+    return { token: accessToken, data: user };
+  } catch (error) {
+    return { error: true, code: 500, message: "Internal server error" };
+  }
 };
