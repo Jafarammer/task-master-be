@@ -1,5 +1,6 @@
 import Task, { ITask } from "../models/task.model";
 import mongoose, { Types } from "mongoose";
+import { taskAdapter } from "../adapters/task.adapter";
 
 interface IServiceResult {
   error?: boolean;
@@ -157,7 +158,7 @@ export const getTask = async ({
       Task.countDocuments({ user_id, deleted_at: null }),
     ]);
     return {
-      data: tasks,
+      data: taskAdapter(tasks),
       pagination: {
         page,
         limit,

@@ -1,22 +1,28 @@
 import { Request, Response } from "express";
 import * as taskService from "../services/task.service";
+import { AuthRequest } from "../middleware/authMiddleware";
 
-export const handleCreateTask = async (req: Request, res: Response) => {
-  const user_id = (req as any).user?.id;
+export const handleCreateTask = async (req: AuthRequest, res: Response) => {
+  const userId = req.user?.id;
+
   const { title, description, due_date, priority } = req.body;
 
-  const task = await taskService.createTask(
-    user_id,
+  const result = await taskService.createTask(
+    userId,
     title,
     description,
     due_date,
     priority
   );
 
-  if (task.error) {
-    return res.status(task.code).json({ message: task.message });
+  if (result.error) {
+    return res.status(result.code).json({ message: result.message });
   }
-  return res.status(201).json({ data: task });
+
+  return res.status(201).json({
+    message: "Create task success",
+    data: result.data,
+  });
 };
 
 export const handleUpdateTask = async (req: Request, res: Response) => {
