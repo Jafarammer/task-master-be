@@ -12,6 +12,7 @@ interface IServiceResult {
 
 interface IGetTaskParams {
   user_id: Types.ObjectId | string | undefined;
+  task_id?: Types.ObjectId | string | undefined;
   page?: number;
   limit?: number;
   sort_by?: string;
@@ -490,6 +491,44 @@ export const getTaskPending = async ({
       },
     } as unknown as IServiceResult;
   } catch (error) {
+    return { error: true, code: 500, message: "Internal server error" };
+  }
+};
+
+export const taskDetail = async ({
+  user_id,
+  task_id,
+}: IGetTaskParams): Promise<IServiceResult> => {
+  try {
+    if (!user_id) {
+      return { error: true, code: 400, message: "User id is required!" };
+    }
+    if (!task_id) {
+      return { error: true, code: 400, message: "Task id is required!" };
+    }
+
+    if (!mongoose.isValidObjectId(user_id))
+      return { error: true, code: 400, message: "Invalid user id format" };
+
+    if (!mongoose.isValidObjectId(task_id))
+      return { error: true, code: 400, message: "Invalid task id format" };
+
+    const taskFindId = await Task.findOne({
+      _id: task_id,
+      user_id: user_id,
+      deleted_at: null,
+    })
+      .select("-user_id -is_completed -deleted_at -createdAt -updatedAt")
+      .lean()
+      .exec();
+
+    if (!taskFindId) {
+      return { error: true, code: 404, message: "Task not found!" };
+    }
+
+    return { data: taskAdapter(taskFindId) };
+  } catch (error) {
+    console.error("TASK DETAIL ERROR:", error);
     return { error: true, code: 500, message: "Internal server error" };
   }
 };

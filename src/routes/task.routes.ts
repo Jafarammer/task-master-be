@@ -11,11 +11,13 @@ import {
   handleTaskUpdateStatus,
   handleGetTaskCompleted,
   handleGetTaskPending,
+  handleGetDetail,
 } from "../controllers/task.controller";
 
 const router = Router();
 
 router.get("/", authToken, handleGetTask);
+router.get("/:id", authToken, handleGetDetail);
 router.post("/", authToken, handleCreateTask);
 router.patch("/:id", authToken, handleUpdateTask);
 router.get("/search", authToken, handleSearchTask);

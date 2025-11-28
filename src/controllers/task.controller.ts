@@ -213,3 +213,17 @@ export const handleGetTaskPending = async (req: Request, res: Response) => {
     .status(201)
     .json({ data: result.data, meta_data: result.pagination });
 };
+
+export const handleGetDetail = async (req: AuthRequest, res: Response) => {
+  const userId = req.user?.id;
+  const taskId = req.params.id;
+  const result = await taskService.taskDetail({
+    user_id: userId,
+    task_id: taskId,
+  });
+  if (result.error) {
+    return res.status(result.code).json({ message: result.message });
+  }
+
+  return res.status(200).json({ data: result.data });
+};

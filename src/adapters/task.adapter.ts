@@ -1,13 +1,19 @@
-import { ITask } from "../models/task.model";
 import { formatDate } from "../utils/date";
 import { toSentenceCase } from "../utils/string";
 
-const configAdapter = (task: ITask) => ({
-  ...task.toObject(),
-  due_date: formatDate(task.due_date),
-  title: toSentenceCase(task.title),
-});
+const configAdapter = (task: any) => {
+  const plain = typeof task.toObject === "function" ? task.toObject() : task;
 
-export const taskAdapter = (task: ITask[]) => {
-  return task.map(configAdapter);
+  return {
+    ...plain,
+    due_date: plain.due_date ? formatDate(plain.due_date) : null,
+    title: plain.title ? toSentenceCase(plain.title) : "",
+  };
+};
+
+export const taskAdapter = (task: any | any[]) => {
+  if (Array.isArray(task)) {
+    return task.map(configAdapter);
+  }
+  return configAdapter(task);
 };
