@@ -47,8 +47,8 @@ export const handleUpdateTask = async (req: Request, res: Response) => {
   return res.status(201).json({ data: task, message: "Update task success" });
 };
 
-export const handleGetTask = async (req: Request, res: Response) => {
-  const user_id: string = (req as any).user?.id;
+export const handleGetTask = async (req: AuthRequest, res: Response) => {
+  const user_id: string = req.user?.id;
   const page: number = Number(req.query.page) || 1;
   const limit: number = Number(req.query.limit) || 5;
   const sort_by: string = String(req.query.sort_by || "createdAt");
