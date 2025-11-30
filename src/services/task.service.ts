@@ -437,7 +437,7 @@ export const getTaskCompleted = async ({
     ]);
 
     return {
-      data: tasks,
+      data: taskAdapter(tasks),
       pagination: {
         page,
         limit,

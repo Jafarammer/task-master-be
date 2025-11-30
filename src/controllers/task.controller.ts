@@ -165,8 +165,11 @@ export const handleTaskUpdateStatus = async (req: Request, res: Response) => {
   return res.status(201).json({ data: result.data, message: result.message });
 };
 
-export const handleGetTaskCompleted = async (req: Request, res: Response) => {
-  const user_id: string = (req as any).user?.id;
+export const handleGetTaskCompleted = async (
+  req: AuthRequest,
+  res: Response
+) => {
+  const user_id: string = req.user?.id;
   const page: number = Number(req.query.page) || 1;
   const limit: number = Number(req.query.limit) || 5;
   const sort_by: string = String(req.query.sort_by) || "createdAt";
@@ -189,8 +192,8 @@ export const handleGetTaskCompleted = async (req: Request, res: Response) => {
     .json({ data: result.data, meta_data: result.pagination });
 };
 
-export const handleGetTaskPending = async (req: Request, res: Response) => {
-  const user_id: string = (req as any).user?.id;
+export const handleGetTaskPending = async (req: AuthRequest, res: Response) => {
+  const user_id: string = req.user?.id;
   const page: number = Number(req.query.page) || 1;
   const limit: number = Number(req.query.limit) || 5;
   const sort_by: string = String(req.query.sort_by) || "createdAt";
