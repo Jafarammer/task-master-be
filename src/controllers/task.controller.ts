@@ -25,10 +25,10 @@ export const handleCreateTask = async (req: AuthRequest, res: Response) => {
   });
 };
 
-export const handleUpdateTask = async (req: Request, res: Response) => {
+export const handleUpdateTask = async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  const user_id = (req as any).user?.id;
-  const { title, description, due_date, priority, is_completed } = req.body;
+  const user_id = req.user?.id;
+  const { title, description, due_date, priority } = req.body;
 
   const task = await taskService.updateTask(
     id,
@@ -36,15 +36,14 @@ export const handleUpdateTask = async (req: Request, res: Response) => {
     title,
     description,
     due_date,
-    priority,
-    is_completed
+    priority
   );
 
   if (task.error) {
     return res.status(task.code).json({ message: task.message });
   }
 
-  return res.status(201).json({ data: task, message: "Update task success" });
+  return res.status(201).json({ data: task.data, message: task.message });
 };
 
 export const handleGetTask = async (req: AuthRequest, res: Response) => {

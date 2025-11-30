@@ -7,7 +7,7 @@ const configAdapter = (task: any) => {
   return {
     ...plain,
     due_date: plain.due_date ? formatDate(plain.due_date) : null,
-    title: plain.title ? toSentenceCase(plain.title) : "",
+    // title: plain.title ? toSentenceCase(plain.title) : "", // blum perlu
   };
 };
 

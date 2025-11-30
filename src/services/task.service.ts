@@ -79,8 +79,7 @@ export const updateTask = async (
   title?: string,
   description?: string,
   due_date?: Date | string,
-  priority?: string,
-  is_completed?: boolean
+  priority?: string
 ): Promise<IServiceResult> => {
   try {
     if (!id || !mongoose.isValidObjectId(String(id))) {
@@ -110,8 +109,6 @@ export const updateTask = async (
       }
       updates.priority = priority;
     }
-    if (is_completed !== undefined)
-      updates.is_completed = Boolean(is_completed);
 
     const query: any = { _id: id, deleted_at: null };
 
@@ -133,7 +130,7 @@ export const updateTask = async (
       return { error: true, code: 404, message: "Task not found" };
     }
 
-    return { data: updatedTask };
+    return { data: updatedTask, message: "Update task success" };
   } catch (error) {
     return { error: true, code: 500, message: "Internal server error" };
   }
