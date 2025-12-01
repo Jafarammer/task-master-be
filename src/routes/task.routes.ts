@@ -32,7 +32,7 @@ router.patch("/status/:task_id", authToken, handleTaskUpdateStatus); // done int
 router.post("/", authToken, handleCreateTask);
 
 // ✅ DETAIL & UPDATE (DINAMIS DI PALING BAWAH)
-router.get("/:id", authToken, handleGetDetail); // done integration from fe
+router.get("/detail/:id", authToken, handleGetDetail); // done integration from fe
 router.patch("/:id", authToken, handleUpdateTask); // done integration from fe
 
 export default router;

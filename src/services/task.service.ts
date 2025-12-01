@@ -479,7 +479,7 @@ export const getTaskPending = async ({
     ]);
 
     return {
-      data: tasks,
+      data: taskAdapter(tasks),
       pagination: {
         page,
         limit,
@@ -523,7 +523,7 @@ export const taskDetail = async ({
       return { error: true, code: 404, message: "Task not found!" };
     }
 
-    return { data: taskAdapter(taskFindId) };
+    return { data: taskFindId };
   } catch (error) {
     console.error("TASK DETAIL ERROR:", error);
     return { error: true, code: 500, message: "Internal server error" };
