@@ -25,5 +25,7 @@ export const authLogin = async (req: Request, res: Response) => {
     return res.status(result.code).json({ message: result.message });
   }
 
-  return res.status(201).json({ accessToken: result.token });
+  return res
+    .status(201)
+    .json({ accessToken: result.token, message: result.message });
 };

@@ -66,7 +66,11 @@ export const loginUser = async (
 
     const accessToken = createAccessToken(payload);
 
-    return { token: accessToken, data: user };
+    return {
+      token: accessToken,
+      data: user,
+      message: `Welcome back ${user.first_name + " " + user.last_name}`,
+    };
   } catch (error) {
     return { error: true, code: 500, message: "Internal server error" };
   }
