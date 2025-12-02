@@ -515,7 +515,7 @@ export const taskDetail = async ({
       user_id: user_id,
       deleted_at: null,
     })
-      .select("-user_id -is_completed -deleted_at -createdAt -updatedAt")
+      .select("-user_id -deleted_at -createdAt -updatedAt")
       .lean()
       .exec();
 
