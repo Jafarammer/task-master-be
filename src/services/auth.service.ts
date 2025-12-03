@@ -63,7 +63,6 @@ export const registerUser = async (
 
     return { message: "Registered successfully" };
   } catch (error) {
-    console.error("REGISTER ERROR:", error);
     return { error: true, code: 500, message: "Internal server error" };
   }
 };
