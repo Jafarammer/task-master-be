@@ -52,6 +52,7 @@ export const handleGetTask = async (req: AuthRequest, res: Response) => {
   const limit: number = Number(req.query.limit) || 5;
   const sort_by: string = String(req.query.sort_by || "createdAt");
   const order = req.query.order === "asc" ? "asc" : "desc";
+  const query: string = String(req.query.search) || "";
 
   const result = await taskService.getTask({
     user_id,
@@ -59,6 +60,7 @@ export const handleGetTask = async (req: AuthRequest, res: Response) => {
     limit,
     sort_by,
     order,
+    query,
   });
 
   if (result.error) {
@@ -70,8 +72,8 @@ export const handleGetTask = async (req: AuthRequest, res: Response) => {
     .json({ data: result.data, meta_data: result.pagination });
 };
 
-export const handleSearchTask = async (req: Request, res: Response) => {
-  const user_id: string = (req as any).user?.id;
+export const handleSearchTask = async (req: AuthRequest, res: Response) => {
+  const user_id: string = req.user?.id;
   const query: string = req.query.q ? String(req.query.q) : "";
   const page: number | undefined = req.query.page
     ? Number(req.query.page)
@@ -99,7 +101,6 @@ export const handleSearchTask = async (req: Request, res: Response) => {
   if (result.error) {
     res.status(result.code).json({ message: result.message });
   }
-
   return res
     .status(201)
     .json({ data: result.data, meta_data: result.pagination });
@@ -174,6 +175,7 @@ export const handleGetTaskCompleted = async (
   const limit: number = Number(req.query.limit) || 5;
   const sort_by: string = String(req.query.sort_by) || "createdAt";
   const order: "asc" | "desc" = req.query.order === "asc" ? "asc" : "desc";
+  const query: string = String(req.query.search) || "";
 
   const result = await taskService.getTaskCompleted({
     user_id,
@@ -181,6 +183,7 @@ export const handleGetTaskCompleted = async (
     limit,
     sort_by,
     order,
+    query,
   });
 
   if (result.error) {
@@ -198,6 +201,7 @@ export const handleGetTaskPending = async (req: AuthRequest, res: Response) => {
   const limit: number = Number(req.query.limit) || 5;
   const sort_by: string = String(req.query.sort_by) || "createdAt";
   const order: "asc" | "desc" = req.query.order === "asc" ? "asc" : "desc";
+  const query: string = String(req.query.search) || "";
 
   const result = await taskService.getTaskPending({
     user_id,
@@ -205,6 +209,7 @@ export const handleGetTaskPending = async (req: AuthRequest, res: Response) => {
     limit,
     sort_by,
     order,
+    query,
   });
 
   if (result.error) {

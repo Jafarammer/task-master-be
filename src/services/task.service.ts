@@ -17,6 +17,7 @@ interface IGetTaskParams {
   limit?: number;
   sort_by?: string;
   order?: "asc" | "desc";
+  query?: string;
 }
 
 interface ISearchTaskParams {
@@ -142,18 +143,28 @@ export const getTask = async ({
   limit = 5,
   sort_by = "createdAt",
   order = "desc",
+  query,
 }: IGetTaskParams): Promise<IServiceResult> => {
   try {
+    if (!user_id) {
+      return { error: true, code: 404, message: "Unauthorized user." };
+    }
     const skip: number = (page - 1) * limit;
     const sortOption: any = {};
     sortOption[sort_by] = order === "asc" ? 1 : -1;
 
+    const searchFilter: Record<string, unknown> = {
+      user_id,
+      deleted_at: null,
+      $or: [
+        { title: { $regex: query, $options: "i" } },
+        { description: { $regex: query, $options: "i" } },
+      ],
+    };
+
     const [tasks, total] = await Promise.all([
-      Task.find({ user_id, deleted_at: null })
-        .sort(sortOption)
-        .skip(skip)
-        .limit(limit),
-      Task.countDocuments({ user_id, deleted_at: null }),
+      Task.find(searchFilter).sort(sortOption).skip(skip).limit(limit),
+      Task.countDocuments(searchFilter),
     ]);
     return {
       data: taskAdapter(tasks),
@@ -173,7 +184,7 @@ export const searchTask = async ({
   user_id,
   query,
   page = 1,
-  limit = 10,
+  limit = 5,
   sort_by = "createdAt",
   order = "desc",
 }: ISearchTaskParams): Promise<IServiceResult> => {
@@ -414,6 +425,7 @@ export const getTaskCompleted = async ({
   limit = 5,
   sort_by = "createdAt",
   order = "desc",
+  query,
 }: IGetTaskParams): Promise<IServiceResult> => {
   try {
     if (!user_id) {
@@ -428,12 +440,19 @@ export const getTaskCompleted = async ({
     const sortOption: any = {};
     sortOption[sort_by] = order === "asc" ? 1 : -1;
 
+    const searchFilter: Record<string, unknown> = {
+      user_id,
+      deleted_at: null,
+      is_completed: true,
+      $or: [
+        { title: { $regex: query, $options: "i" } },
+        { description: { $regex: query, $options: "i" } },
+      ],
+    };
+
     const [tasks, total] = await Promise.all([
-      Task.find({ user_id, is_completed: true, deleted_at: null })
-        .sort(sortOption)
-        .skip(skip)
-        .limit(limit),
-      Task.countDocuments({ user_id, is_completed: true, deleted_at: null }),
+      Task.find(searchFilter).sort(sortOption).skip(skip).limit(limit),
+      Task.countDocuments(searchFilter),
     ]);
 
     return {
@@ -456,6 +475,7 @@ export const getTaskPending = async ({
   limit = 5,
   sort_by = "createdAt",
   order = "desc",
+  query = "",
 }: IGetTaskParams): Promise<IServiceResult> => {
   try {
     if (!user_id) {
@@ -470,12 +490,19 @@ export const getTaskPending = async ({
     const sortOption: any = {};
     sortOption[sort_by] = order === "asc" ? 1 : -1;
 
+    const searchFilter: Record<string, unknown> = {
+      user_id,
+      deleted_at: null,
+      is_completed: false,
+      $or: [
+        { title: { $regex: query, $options: "i" } },
+        { description: { $regex: query, $options: "i" } },
+      ],
+    };
+
     const [tasks, total] = await Promise.all([
-      Task.find({ user_id, is_completed: false, deleted_at: null })
-        .sort(sortOption)
-        .skip(skip)
-        .limit(limit),
-      Task.countDocuments({ user_id, is_completed: false, deleted_at: null }),
+      Task.find(searchFilter).sort(sortOption).skip(skip).limit(limit),
+      Task.countDocuments(searchFilter),
     ]);
 
     return {
