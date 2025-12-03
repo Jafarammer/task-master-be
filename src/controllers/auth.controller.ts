@@ -29,3 +29,14 @@ export const authLogin = async (req: Request, res: Response) => {
     .status(201)
     .json({ accessToken: result.token, message: result.message });
 };
+
+export const activateAccount = async (req: Request, res: Response) => {
+  const { code } = req.query;
+
+  const result = await authService.activateUser(code as string);
+
+  if (result.error) {
+    return res.status(result.code).json({ message: result.message });
+  }
+  res.json({ message: result.message });
+};
