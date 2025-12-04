@@ -8,6 +8,6 @@ import { authToken } from "../middleware/authMiddleware";
 const router = Router();
 
 router.get("/", authToken, handleGetAllUser);
-router.get("/:id", authToken, handleGetUserById);
+router.get("/profile", authToken, handleGetUserById);
 
 export default router;

@@ -29,7 +29,9 @@ export const getUserById = async (id: string): Promise<IServiceResult> => {
     }
 
     const userFindId = await User.findById(normalizedId)
-      .select("-password")
+      .select(
+        "-password -_id -email -refreshToken -is_active -activationCode -createdAt -updatedAt"
+      )
       .exec();
     if (!userFindId) {
       return { error: true, code: 404, message: "User not found" };
