@@ -43,7 +43,7 @@ export const registerUser = async (
 
     await user.save();
 
-    // const activationLink = `${CLIENT_HOST}/api/auth/activate?code=${activationCode}`; ini untuk jika fe sudah ada tempalte activate
+    // const activationLink = `${CLIENT_HOST}/api/auth/activate?code=${activationCode}`; //ini untuk jika fe sudah ada tempalte activate
     const activationLink = `http://localhost:8000/api/auth/activate?code=${activationCode}`;
 
     const contentMail = await renderMailHtml("registration-success.ejs", {
