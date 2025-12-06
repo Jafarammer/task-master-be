@@ -5,6 +5,11 @@ const src = path.join(__dirname, "src/utils/mail/templates");
 const dest = path.join(__dirname, "dist/src/utils/mail/templates");
 
 function copyDir(srcDir, destDir) {
+  if (!fs.existsSync(srcDir)) {
+    console.error("❌ SOURCE TEMPLATE NOT FOUND:", srcDir);
+    process.exit(1); // biar build FAIL kalau salah
+  }
+
   fs.mkdirSync(destDir, { recursive: true });
 
   const files = fs.readdirSync(srcDir);
@@ -21,5 +26,7 @@ function copyDir(srcDir, destDir) {
   }
 }
 
+// RUN COPY
 copyDir(src, dest);
-console.log("✅ Email templates copied to dist");
+
+console.log("✅ Email templates copied to:", dest);

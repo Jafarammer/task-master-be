@@ -1,6 +1,7 @@
 import nodemailer from "nodemailer";
 import ejs from "ejs";
 import path from "path";
+import fs from "fs";
 import {
   EMAIL_SMTP_SERVICE_NAME,
   EMAIL_SMTP_HOST,
@@ -8,13 +9,12 @@ import {
   EMAIL_SMTP_SECURE,
   EMAIL_SMTP_USER,
   EMAIL_SMTP_PASS,
-  NODE_ENV,
 } from "../env";
 
 const transporter = nodemailer.createTransport({
   service: EMAIL_SMTP_SERVICE_NAME,
   host: EMAIL_SMTP_HOST,
-  port: EMAIL_SMTP_PORT,
+  port: Number(EMAIL_SMTP_PORT),
   secure: EMAIL_SMTP_SECURE,
   auth: {
     user: EMAIL_SMTP_USER,
@@ -42,7 +42,6 @@ export const sendMail = async ({ ...mailParams }: ISendMail) => {
   const result = await transporter.sendMail({
     ...mailParams,
   });
-
   return result;
 };
 
@@ -50,11 +49,13 @@ export const renderMailHtml = async (
   template: string,
   data: any
 ): Promise<string> => {
-  const isProd = NODE_ENV === "production";
+  const templatePath = path.join(__dirname, "templates", template);
 
-  const templatePath = isProd
-    ? path.join(process.cwd(), "dist/src/utils/mail/templates", template)
-    : path.join(__dirname, "templates", template);
+  console.log("📨 EJS TEMPLATE PATH:", templatePath);
+
+  if (!fs.existsSync(templatePath)) {
+    throw new Error(`EJS template not found at: ${templatePath}`);
+  }
 
   return await ejs.renderFile(templatePath, data);
 };
