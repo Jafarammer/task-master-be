@@ -18,3 +18,4 @@ export const CLIENT_HOST: string =
   process.env.CLIENT_HOST || "http://localhost:5173";
 export const VERIFICATION_HOST =
   process.env.VERIFICATION_HOST || "http://localhost:8000";
+export const NODE_ENV = process.env.NODE_ENV || "development";

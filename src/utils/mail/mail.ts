@@ -8,6 +8,7 @@ import {
   EMAIL_SMTP_SECURE,
   EMAIL_SMTP_USER,
   EMAIL_SMTP_PASS,
+  NODE_ENV,
 } from "../env";
 
 const transporter = nodemailer.createTransport({
@@ -49,10 +50,11 @@ export const renderMailHtml = async (
   template: string,
   data: any
 ): Promise<string> => {
-  const content = await ejs.renderFile(
-    path.join(__dirname, `templates/${template}`),
-    data
-  );
+  const isProd = NODE_ENV === "production";
 
-  return content as string;
+  const templatePath = isProd
+    ? path.join(process.cwd(), "dist/src/utils/mail/templates", template)
+    : path.join(__dirname, "templates", template);
+
+  return await ejs.renderFile(templatePath, data);
 };
