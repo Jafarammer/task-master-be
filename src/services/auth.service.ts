@@ -5,7 +5,7 @@ import { createAccessToken, AccessPayload } from "../utils/tokens";
 import { RegisterPayload } from "../types/auth";
 import { validateRegister } from "../helpers/auth.helper";
 import { sendMail, renderMailHtml } from "../utils/mail/mail";
-import { CLIENT_HOST, EMAIL_SMTP_USER } from "../utils/env";
+import { CLIENT_HOST, EMAIL_SMTP_USER, VERIFICATION_HOST } from "../utils/env";
 
 interface IServiceResult {
   token?: string;
@@ -43,8 +43,8 @@ export const registerUser = async (
 
     await user.save();
 
-    // const activationLink = `${CLIENT_HOST}/api/auth/activate?code=${activationCode}`; //ini untuk jika fe sudah ada tempalte activate
-    const activationLink = `http://localhost:8000/api/auth/activate?code=${activationCode}`;
+    const activationLink = `${VERIFICATION_HOST}/api/auth/activate?code=${activationCode}`; //ini untuk jika fe sudah ada tempalte activate
+    // const activationLink = `http://localhost:8000/api/auth/activate?code=${activationCode}`;
 
     const contentMail = await renderMailHtml("registration-success.ejs", {
       first_name: payload.firstName,

@@ -16,3 +16,5 @@ export const EMAIL_SMTP_SERVICE_NAME: string =
   process.env.EMAIL_SMTP_SERVICE_NAME || "";
 export const CLIENT_HOST: string =
   process.env.CLIENT_HOST || "http://localhost:5173";
+export const VERIFICATION_HOST =
+  process.env.VERIFICATION_HOST || "http://localhost:8000";
