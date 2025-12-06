@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "nodemon index.ts",
-    "build": "tsc",
+    "build": "tsc && node copy-templates.cjs",
     "start": "node dist/index.js",
     "lint": "eslint . --ext .ts"
   },
