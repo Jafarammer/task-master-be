@@ -30,7 +30,25 @@ export const registerUser = async (
     }
 
     const hashedPassword = await bcrypt.hash(payload.password, 10);
+
     const activationCode = crypto.randomBytes(32).toString("hex");
+
+    const activationLink = `${VERIFICATION_HOST}/api/auth/activate?code=${activationCode}`;
+
+    const contentMail = await renderMailHtml("registration-success.ejs", {
+      first_name: payload.firstName,
+      last_name: payload.lastName,
+      email: payload.email,
+      createdAt: new Date(),
+      activationLink: activationLink,
+    });
+
+    await sendMail({
+      from: EMAIL_SMTP_USER,
+      to: payload.email,
+      subject: "Aktifkan Akun Anda",
+      html: contentMail,
+    });
 
     const user = new User({
       first_name: payload.firstName,
@@ -43,27 +61,17 @@ export const registerUser = async (
 
     await user.save();
 
-    const activationLink = `${VERIFICATION_HOST}/api/auth/activate?code=${activationCode}`; //ini untuk jika fe sudah ada tempalte activate
-    // const activationLink = `http://localhost:8000/api/auth/activate?code=${activationCode}`;
-
-    const contentMail = await renderMailHtml("registration-success.ejs", {
-      first_name: payload.firstName,
-      last_name: payload.lastName,
-      email: payload.email,
-      createdAt: user.createdAt,
-      activationLink: activationLink,
-    });
-
-    await sendMail({
-      from: EMAIL_SMTP_USER,
-      to: payload.email,
-      subject: "Aktifkan Akun Anda",
-      html: contentMail,
-    });
-
-    return { message: "Registered successfully" };
+    return {
+      message: "Registered successfully. Check your email to activate account.",
+    };
   } catch (error) {
-    return { error: true, code: 500, message: "Internal server error" };
+    console.error("REGISTER ERROR:", error);
+
+    return {
+      error: true,
+      code: 500,
+      message: "Internal server error",
+    };
   }
 };
 
