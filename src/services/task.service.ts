@@ -34,7 +34,7 @@ export const createTask = async (
   title: string,
   description: string,
   due_date: Date | string,
-  priority: string
+  priority: string,
 ): Promise<IServiceResult> => {
   try {
     if (!user_id || !title || !description || !due_date) {
@@ -80,7 +80,7 @@ export const updateTask = async (
   title?: string,
   description?: string,
   due_date?: Date | string,
-  priority?: string
+  priority?: string,
 ): Promise<IServiceResult> => {
   try {
     if (!id || !mongoose.isValidObjectId(String(id))) {
@@ -124,7 +124,7 @@ export const updateTask = async (
     const updatedTask = await Task.findOneAndUpdate(
       query,
       { $set: updates },
-      { new: true }
+      { new: true },
     ).exec();
 
     if (!updatedTask) {
@@ -227,7 +227,7 @@ export const searchTask = async ({
 
 export const softDeleteTask = async (
   user_id: string,
-  task_id: string
+  task_id: string,
 ): Promise<IServiceResult> => {
   try {
     if (!user_id || !task_id) {
@@ -282,7 +282,7 @@ export const softDeleteTask = async (
 
 export const restoreTask = async (
   user_id: string,
-  task_id: string
+  task_id: string,
 ): Promise<IServiceResult> => {
   try {
     if (!user_id || !task_id) {
@@ -327,7 +327,7 @@ export const restoreTask = async (
 
 export const hardDeleteTask = async (
   user_id: string,
-  task_id: string
+  task_id: string,
 ): Promise<IServiceResult> => {
   try {
     if (!user_id || !task_id) {
@@ -369,7 +369,7 @@ export const hardDeleteTask = async (
 export const updateTaskStatus = async (
   user_id: string,
   task_id: string,
-  is_completed: boolean
+  is_completed: boolean,
 ): Promise<IServiceResult> => {
   try {
     if (!user_id || !task_id) {
@@ -406,7 +406,7 @@ export const updateTaskStatus = async (
       {
         is_completed,
       },
-      { new: true }
+      { new: true },
     );
 
     if (!updated) {
@@ -543,7 +543,6 @@ export const taskDetail = async ({
       deleted_at: null,
     })
       .select("-user_id -deleted_at -createdAt -updatedAt")
-      .lean()
       .exec();
 
     if (!taskFindId) {

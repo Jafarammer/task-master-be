@@ -4,8 +4,7 @@ export type RegisterField = {
 };
 
 export type RegisterPayload = {
-  firstName: string;
-  lastName: string;
+  fullName: string;
   email: string;
   password: string;
 };

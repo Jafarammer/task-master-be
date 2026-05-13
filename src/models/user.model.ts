@@ -1,8 +1,7 @@
 import { Schema, model, Document } from "mongoose";
 
 export interface IUser extends Document {
-  first_name: string;
-  last_name: string;
+  full_name: string;
   email: string;
   password: string;
   is_active: boolean;
@@ -14,8 +13,7 @@ export interface IUser extends Document {
 
 const userSchema = new Schema<IUser>(
   {
-    first_name: { type: String, required: true },
-    last_name: { type: String, required: true },
+    full_name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     refreshToken: { type: String, default: null },
@@ -27,7 +25,7 @@ const userSchema = new Schema<IUser>(
       type: String,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default model<IUser>("User", userSchema);

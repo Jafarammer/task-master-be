@@ -16,7 +16,7 @@ interface IServiceResult {
 }
 
 export const registerUser = async (
-  payload: RegisterPayload
+  payload: RegisterPayload,
 ): Promise<IServiceResult> => {
   try {
     const existing = await User.findOne({ email: payload.email });
@@ -36,8 +36,7 @@ export const registerUser = async (
     const activationLink = `${VERIFICATION_HOST}/api/auth/activate?code=${activationCode}`;
 
     const contentMail = await renderMailHtml("registration-success.ejs", {
-      first_name: payload.firstName,
-      last_name: payload.lastName,
+      full_name: payload.fullName,
       email: payload.email,
       createdAt: new Date(),
       activationLink: activationLink,
@@ -51,8 +50,7 @@ export const registerUser = async (
     });
 
     const user = new User({
-      first_name: payload.firstName,
-      last_name: payload.lastName,
+      full_name: payload.fullName,
       email: payload.email,
       password: hashedPassword,
       activationCode: activationCode,
@@ -77,7 +75,7 @@ export const registerUser = async (
 
 export const loginUser = async (
   email: string,
-  password: string
+  password: string,
 ): Promise<IServiceResult> => {
   try {
     const user = await User.findOne({ email });
@@ -109,7 +107,7 @@ export const loginUser = async (
     return {
       token: accessToken,
       data: user,
-      message: `Welcome back ${user.first_name + " " + user.last_name}`,
+      message: `Welcome back ${user.full_name}`,
     };
   } catch (error) {
     return { error: true, code: 500, message: "Internal server error" };

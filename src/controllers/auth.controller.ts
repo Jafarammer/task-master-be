@@ -3,10 +3,9 @@ import * as authService from "../services/auth.service";
 import { CLIENT_HOST } from "../utils/env";
 
 export const authRegister = async (req: Request, res: Response) => {
-  const { firstName, lastName, email, password } = req.body;
+  const { fullName, email, password } = req.body;
   const result = await authService.registerUser({
-    firstName,
-    lastName,
+    fullName,
     email,
     password,
   });
@@ -39,13 +38,13 @@ export const activateAccount = async (req: Request, res: Response) => {
   if (result.error) {
     return res.redirect(
       `${CLIENT_HOST}/login?status=error&message=${encodeURIComponent(
-        result.message || "Invalid activation token"
-      )}`
+        result.message || "Invalid activation token",
+      )}`,
     );
   }
   return res.redirect(
     `${CLIENT_HOST}/login?status=success&message=${encodeURIComponent(
-      "Account activated successfully"
-    )}`
+      "Account activated successfully",
+    )}`,
   );
 };

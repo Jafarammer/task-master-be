@@ -6,14 +6,12 @@ interface IValidation {
 }
 
 export const validateRegister = ({
-  firstName,
-  lastName,
+  fullName,
   email,
   password,
 }): IValidation => {
   const requiredFields: RegisterField[] = [
-    { field: firstName, message: "First name is required!" },
-    { field: lastName, message: "Last name is required!" },
+    { field: fullName, message: "Full name is required!" },
     { field: email, message: "Email is required!" },
     { field: password, message: "Password is required!" },
   ];
