@@ -47,18 +47,15 @@ export const sendMail = async ({ ...mailParams }: ISendMail) => {
 // ========================
 // ✅ RENDER EJS TEMPLATE
 // ========================
-export const renderMailHtml = async (
+export const renderVerifyMailHtml = async (
   template: string,
   data: any,
 ): Promise<string> => {
   // ✅ SESUAI STRUKTUR BUILD KAMU
   const basePath =
     process.env.NODE_ENV === "production"
-      ? path.resolve(
-          process.cwd(),
-          "dist/src/utils/mail/templates/registration",
-        )
-      : path.resolve(process.cwd(), "src/utils/mail/templates/registration");
+      ? path.resolve(process.cwd(), "dist/src/utils/mail/templates/reverify")
+      : path.resolve(process.cwd(), "src/utils/mail/templates/reverify");
 
   const templatePath = path.join(basePath, template);
 

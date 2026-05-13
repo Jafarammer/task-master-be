@@ -122,6 +122,8 @@ export const activateUser = async (code: string): Promise<IServiceResult> => {
   }
 
   user.is_active = true;
+  user.email = user.pending_mail;
+  user.pending_mail = null;
   user.activationCode = "";
   await user.save();
 

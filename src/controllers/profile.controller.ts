@@ -11,3 +11,14 @@ export const handleGetProfile = async (req: AuthRequest, res: Response) => {
 
   return res.status(200).json(profile);
 };
+
+export const handleUpdateProfile = async (req: AuthRequest, res: Response) => {
+  const id = req.user?.id;
+  const { fullName, email } = req.body;
+  const result = await profileService.updateProfile(id, { fullName, email });
+  if (result.error) {
+    return res.status(result.code).json({ message: result.message });
+  }
+
+  return res.status(201).json({ message: result.message });
+};
