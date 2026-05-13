@@ -122,7 +122,10 @@ export const updateProfile = async (
     await user.save();
 
     return {
-      message: "Verification email sent to your new email address",
+      message:
+        email !== user.email
+          ? "Verification email sent to your new email address"
+          : "Update profile successfully",
     };
   } catch (error: any) {
     console.error("UPDATE PROFILE ERROR:", error);
