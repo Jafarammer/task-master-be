@@ -6,6 +6,7 @@ import { CLIENT_HOST } from "./src/utils/env";
 
 import userRoutes from "./src/routes/user.routes";
 import authRoutes from "./src/routes/auth.routes";
+import profileRoutes from "./src/routes/profile.routes";
 import taskRoutes from "./src/routes/task.routes";
 
 const app: Application = express();
@@ -17,7 +18,7 @@ app.use(helmet());
 app.use(express.json());
 
 const allowedOrigins = ["http://localhost:5173", CLIENT_HOST].filter(
-  Boolean
+  Boolean,
 ) as string[];
 
 app.use(
@@ -31,7 +32,7 @@ app.use(
       }
     },
     credentials: true,
-  })
+  }),
 );
 
 app.use(morgan("dev"));
@@ -39,6 +40,7 @@ app.use(morgan("dev"));
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/profile", profileRoutes);
 app.use("/api/task", taskRoutes);
 
 // Health check (Render cek ini)
