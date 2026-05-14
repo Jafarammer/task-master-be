@@ -20,5 +20,9 @@ export const handleUpdateProfile = async (req: AuthRequest, res: Response) => {
     return res.status(result.code).json({ message: result.message });
   }
 
-  return res.status(201).json({ message: result.message });
+  return res.status(201).json({
+    message: result.message,
+    requireRelogin: result.requireRelogin,
+    data: result.data,
+  });
 };

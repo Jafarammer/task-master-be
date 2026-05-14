@@ -29,6 +29,7 @@ export const getProfile = async (
     }
 
     return {
+      message: "Fetch profile successfully",
       data: {
         fullName: userFindId.full_name,
         email: userFindId.email,
@@ -44,7 +45,11 @@ export const updateProfile = async (
   payload: IUpdateProfilePayload,
 ): Promise<IProfileServiceResult> => {
   try {
+    // =========================
+    // VALIDATE ID
+    // =========================
     const normalizedId = String(id ?? "").trim();
+
     if (!normalizedId) {
       return {
         error: true,
@@ -52,6 +57,7 @@ export const updateProfile = async (
         message: "Id is required",
       };
     }
+
     if (!mongoose.isValidObjectId(normalizedId)) {
       return {
         error: true,
@@ -60,17 +66,24 @@ export const updateProfile = async (
       };
     }
 
+    // =========================
+    // FIND USER
+    // =========================
     const user = await User.findById(normalizedId);
 
     if (!user) {
       return {
         error: true,
-        code: 400,
+        code: 404,
         message: "User not found",
       };
     }
 
+    // =========================
+    // NORMALIZE PAYLOAD
+    // =========================
     const fullName = payload.fullName.trim();
+
     const email = payload.email.trim().toLowerCase();
 
     if (!fullName || !email) {
@@ -81,8 +94,12 @@ export const updateProfile = async (
       };
     }
 
+    // =========================
+    // CHECK EMAIL DUPLICATE
+    // =========================
     const existingEmail = await User.findOne({
       email,
+
       _id: {
         $ne: user._id,
       },
@@ -96,39 +113,83 @@ export const updateProfile = async (
       };
     }
 
+    // =========================
+    // CHECK EMAIL CHANGED
+    // =========================
+    const isEmailChanged = email !== user.email;
+
+    // =========================
+    // UPDATE FULL NAME
+    // =========================
     user.full_name = fullName;
-    if (email !== user.email) {
+
+    // =========================
+    // EMAIL CHANGE FLOW
+    // =========================
+    if (isEmailChanged) {
       const emailChangeCode = crypto.randomBytes(32).toString("hex");
+
       const verificationLink = `${VERIFICATION_HOST}/api/auth/activate?code=${emailChangeCode}`;
 
+      // save pending email
       user.pending_mail = email;
+
+      // verification code
       user.activationCode = emailChangeCode;
+
+      // require re-activation
       user.is_active = false;
 
+      // invalidate refresh token
+      user.refreshToken = null;
+
+      // render mail template
       const contentMail = await renderVerifyMailHtml("reverify-success.ejs", {
         full_name: user.full_name,
+
         current_email: user.email,
+
         new_email: email,
+
         verificationLink,
       });
+
+      // send email
       await sendMail({
         from: EMAIL_SMTP_USER,
+
         to: email,
+
         subject: "Verify Your New Email Address",
+
         html: contentMail,
       });
     }
 
+    // =========================
+    // SAVE USER
+    // =========================
     await user.save();
 
+    // =========================
+    // RESPONSE
+    // =========================
     return {
-      message:
-        email !== user.email
-          ? "Verification email sent to your new email address"
-          : "Update profile successfully",
+      message: isEmailChanged
+        ? "Verification email sent to your new email address"
+        : "Update profile successfully",
+
+      requireRelogin: isEmailChanged,
+
+      data: {
+        fullName: user.full_name,
+
+        email: isEmailChanged ? email : user.email,
+      },
     };
   } catch (error: any) {
     console.error("UPDATE PROFILE ERROR:", error);
+
     return {
       error: true,
       code: 500,

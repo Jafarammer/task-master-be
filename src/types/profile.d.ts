@@ -2,6 +2,7 @@ export interface IProfileServiceResult {
   error?: boolean;
   code?: number;
   message?: string;
+  requireRelogin?: boolean;
   data?: unknown;
 }
 
