@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
 import User from "../models/user.model";
 import crypto from "crypto";
+import streamifier from "streamifier";
+import cloudinary from "../utils/cloudinary";
 import { renderVerifyMailHtml, sendMail } from "../utils/mail/reverifyMail";
 import { IProfileServiceResult, IUpdateProfilePayload } from "../types/profile";
 import { CLIENT_HOST, EMAIL_SMTP_USER, VERIFICATION_HOST } from "../utils/env";
@@ -45,9 +47,6 @@ export const updateProfile = async (
   payload: IUpdateProfilePayload,
 ): Promise<IProfileServiceResult> => {
   try {
-    // =========================
-    // VALIDATE ID
-    // =========================
     const normalizedId = String(id ?? "").trim();
 
     if (!normalizedId) {
@@ -66,9 +65,6 @@ export const updateProfile = async (
       };
     }
 
-    // =========================
-    // FIND USER
-    // =========================
     const user = await User.findById(normalizedId);
 
     if (!user) {
@@ -79,9 +75,6 @@ export const updateProfile = async (
       };
     }
 
-    // =========================
-    // NORMALIZE PAYLOAD
-    // =========================
     const fullName = payload.fullName.trim();
 
     const email = payload.email.trim().toLowerCase();
@@ -94,9 +87,6 @@ export const updateProfile = async (
       };
     }
 
-    // =========================
-    // CHECK EMAIL DUPLICATE
-    // =========================
     const existingEmail = await User.findOne({
       email,
 
@@ -113,37 +103,23 @@ export const updateProfile = async (
       };
     }
 
-    // =========================
-    // CHECK EMAIL CHANGED
-    // =========================
     const isEmailChanged = email !== user.email;
 
-    // =========================
-    // UPDATE FULL NAME
-    // =========================
     user.full_name = fullName;
 
-    // =========================
-    // EMAIL CHANGE FLOW
-    // =========================
     if (isEmailChanged) {
       const emailChangeCode = crypto.randomBytes(32).toString("hex");
 
       const verificationLink = `${VERIFICATION_HOST}/api/auth/activate?code=${emailChangeCode}`;
 
-      // save pending email
       user.pending_mail = email;
 
-      // verification code
       user.activationCode = emailChangeCode;
 
-      // require re-activation
       user.is_active = false;
 
-      // invalidate refresh token
       user.refreshToken = null;
 
-      // render mail template
       const contentMail = await renderVerifyMailHtml("reverify-success.ejs", {
         full_name: user.full_name,
 
@@ -154,7 +130,6 @@ export const updateProfile = async (
         verificationLink,
       });
 
-      // send email
       await sendMail({
         from: EMAIL_SMTP_USER,
 
@@ -166,14 +141,8 @@ export const updateProfile = async (
       });
     }
 
-    // =========================
-    // SAVE USER
-    // =========================
     await user.save();
 
-    // =========================
-    // RESPONSE
-    // =========================
     return {
       message: isEmailChanged
         ? "Verification email sent to your new email address"
@@ -190,6 +159,79 @@ export const updateProfile = async (
   } catch (error: any) {
     console.error("UPDATE PROFILE ERROR:", error);
 
+    return {
+      error: true,
+      code: 500,
+      message: "Internal server error",
+    };
+  }
+};
+
+export const updateProfilePicture = async (
+  id: string,
+  file?: Express.Multer.File,
+): Promise<IProfileServiceResult> => {
+  try {
+    const normalizedId = String(id ?? "").trim();
+
+    if (!normalizedId) {
+      return {
+        error: true,
+        code: 400,
+        message: "Id is required",
+      };
+    }
+    if (!mongoose.isValidObjectId(normalizedId)) {
+      return {
+        error: true,
+        code: 400,
+        message: "Invalid id format",
+      };
+    }
+    if (!file) {
+      return {
+        error: true,
+        code: 400,
+        message: "Profile picture is required",
+      };
+    }
+
+    const user = await User.findById(normalizedId);
+    if (!user) {
+      return {
+        error: true,
+        code: 404,
+        message: "User not found",
+      };
+    }
+
+    const uploadResult = await new Promise<any>((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          folder: "task-master/profile",
+          resource_type: "image",
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        },
+      );
+      streamifier.createReadStream(file.buffer).pipe(stream);
+    });
+
+    user.profile_picture = uploadResult.secure_url;
+
+    await user.save();
+
+    return {
+      message: "Profile picture updated successfully",
+      code: 200,
+      data: {
+        profilePicture: user.profile_picture,
+      },
+    };
+  } catch (error: any) {
+    console.error("UPDATE PROFILE PICTURE ERROR:", error);
     return {
       error: true,
       code: 500,

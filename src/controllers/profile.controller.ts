@@ -26,3 +26,18 @@ export const handleUpdateProfile = async (req: AuthRequest, res: Response) => {
     data: result.data,
   });
 };
+
+export const handleUpdateProfilePicture = async (
+  req: AuthRequest,
+  res: Response,
+) => {
+  const id = req.user.id;
+  const result = await profileService.updateProfilePicture(id, req.file);
+  if (result.error) {
+    return res.status(result.code).json({ message: result.message });
+  }
+  return res.status(result.code).json({
+    message: result.message,
+    data: result.data,
+  });
+};

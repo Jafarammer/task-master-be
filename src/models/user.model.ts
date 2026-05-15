@@ -7,6 +7,7 @@ export interface IUser extends Document {
   password: string;
   is_active: boolean;
   activationCode: string;
+  profile_picture?: string;
   refreshToken?: string;
   createdAt?: Date;
   updatedAt?: Date;
@@ -26,6 +27,7 @@ const userSchema = new Schema<IUser>(
     activationCode: {
       type: String,
     },
+    profile_picture: { type: String, default: null },
   },
   { timestamps: true },
 );
