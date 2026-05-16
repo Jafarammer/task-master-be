@@ -8,3 +8,17 @@ export type RegisterPayload = {
   email: string;
   password: string;
 };
+
+export interface IProfileServiceResult {
+  token?: string;
+  error?: boolean;
+  code?: number;
+  message?: string;
+  data?: unknown;
+}
+
+export interface IChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}

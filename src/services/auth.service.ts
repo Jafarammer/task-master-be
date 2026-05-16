@@ -1,23 +1,17 @@
 import bcrypt from "bcrypt";
 import crypto from "crypto";
+import mongoose from "mongoose";
 import User, { IUser } from "../models/user.model";
+import { IProfileServiceResult, IChangePasswordPayload } from "../types/auth";
 import { createAccessToken, AccessPayload } from "../utils/tokens";
 import { RegisterPayload } from "../types/auth";
 import { validateRegister } from "../helpers/auth.helper";
 import { sendMail, renderMailHtml } from "../utils/mail/mail";
 import { CLIENT_HOST, EMAIL_SMTP_USER, VERIFICATION_HOST } from "../utils/env";
 
-interface IServiceResult {
-  token?: string;
-  error?: boolean;
-  code?: number;
-  message?: string;
-  data?: IUser | IUser[] | null;
-}
-
 export const registerUser = async (
   payload: RegisterPayload,
-): Promise<IServiceResult> => {
+): Promise<IProfileServiceResult> => {
   try {
     const existing = await User.findOne({ email: payload.email });
     if (existing) {
@@ -76,7 +70,7 @@ export const registerUser = async (
 export const loginUser = async (
   email: string,
   password: string,
-): Promise<IServiceResult> => {
+): Promise<IProfileServiceResult> => {
   try {
     const user = await User.findOne({ email });
 
@@ -114,7 +108,9 @@ export const loginUser = async (
   }
 };
 
-export const activateUser = async (code: string): Promise<IServiceResult> => {
+export const activateUser = async (
+  code: string,
+): Promise<IProfileServiceResult> => {
   const user = await User.findOne({ activationCode: code });
 
   if (!user) {
@@ -124,8 +120,97 @@ export const activateUser = async (code: string): Promise<IServiceResult> => {
   user.is_active = true;
   user.email = user.pending_mail;
   user.pending_mail = null;
-  user.activationCode = "";
+  user.activationCode = null;
   await user.save();
 
   return { message: "Account activated successfully" };
+};
+
+export const changePassword = async (
+  id: string,
+  payload: IChangePasswordPayload,
+): Promise<IProfileServiceResult> => {
+  try {
+    const normalizedId = String(id ?? "").trim();
+    if (!normalizedId) {
+      return {
+        error: true,
+        code: 400,
+        message: "Id is required",
+      };
+    }
+    if (!mongoose.isValidObjectId(normalizedId)) {
+      return {
+        error: true,
+        code: 400,
+        message: "Invalid id format",
+      };
+    }
+
+    const currentPassword = payload?.currentPassword?.trim();
+    const newPassword = payload?.newPassword?.trim();
+    const confirmPassword = payload?.confirmPassword?.trim();
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      return {
+        error: true,
+        code: 400,
+        message: "All fileds are required",
+      };
+    }
+    if (newPassword !== confirmPassword) {
+      return {
+        error: true,
+        code: 400,
+        message: "Confirm password does not match",
+      };
+    }
+
+    const user = await User.findById(normalizedId);
+    if (!user) {
+      return {
+        error: true,
+        code: 404,
+        message: "User not found",
+      };
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return {
+        error: true,
+        code: 400,
+        message: "Current password is incorrect",
+      };
+    }
+
+    const isSamePassword = await bcrypt.compare(newPassword, user.password);
+    if (isSamePassword) {
+      return {
+        error: true,
+        code: 400,
+        message: "New password cannot be the same as current password",
+      };
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    user.refreshToken = null;
+    await user.save();
+
+    return {
+      code: 201,
+      message: "Password changed successfully",
+      data: {
+        requireRelogin: true,
+      },
+    };
+  } catch (error: any) {
+    console.error("CHANGE PASSWORD ERROR:", error);
+
+    return {
+      error: true,
+      code: 500,
+      message: "Internal server error",
+    };
+  }
 };

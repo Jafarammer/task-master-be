@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { AuthRequest } from "../middleware/authMiddleware";
 import * as authService from "../services/auth.service";
 import { CLIENT_HOST } from "../utils/env";
 
@@ -47,4 +48,21 @@ export const activateAccount = async (req: Request, res: Response) => {
       "Account activated successfully",
     )}`,
   );
+};
+
+export const handleChangePassword = async (req: AuthRequest, res: Response) => {
+  const id = req.user.id;
+  const { currentPassword, newPassword, confirmPassword } = req.body;
+
+  const result = await authService.changePassword(id, {
+    currentPassword,
+    newPassword,
+    confirmPassword,
+  });
+  if (result.error) {
+    return res
+      .status(result.code)
+      .json({ code: result.code, message: result.message });
+  }
+  return res.status(result.code).json(result);
 };

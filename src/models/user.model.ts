@@ -3,12 +3,12 @@ import { Schema, model, Document } from "mongoose";
 export interface IUser extends Document {
   full_name: string;
   email: string;
-  pending_mail?: string;
+  pending_mail?: string | null;
   password: string;
   is_active: boolean;
-  activationCode: string;
-  profile_picture?: string;
-  refreshToken?: string;
+  activationCode?: string | null;
+  profile_picture?: string | null;
+  refreshToken?: string | null;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -26,6 +26,7 @@ const userSchema = new Schema<IUser>(
     },
     activationCode: {
       type: String,
+      default: null,
     },
     profile_picture: { type: String, default: null },
   },
