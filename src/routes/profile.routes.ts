@@ -14,7 +14,7 @@ router.patch("/", authToken, handleUpdateProfile);
 router.patch(
   "/picture",
   authToken,
-  upload.single("profile_picture"),
+  upload.single("profilePicture"),
   handleUpdateProfilePicture,
 );
 

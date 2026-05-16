@@ -9,7 +9,11 @@ export const handleGetProfile = async (req: AuthRequest, res: Response) => {
     return res.status(profile.code).json({ message: profile.message });
   }
 
-  return res.status(200).json(profile);
+  return res.status(profile.code).json({
+    message: profile.message,
+    requireRelogin: profile.requireRelogin,
+    data: profile.data,
+  });
 };
 
 export const handleUpdateProfile = async (req: AuthRequest, res: Response) => {
@@ -20,7 +24,7 @@ export const handleUpdateProfile = async (req: AuthRequest, res: Response) => {
     return res.status(result.code).json({ message: result.message });
   }
 
-  return res.status(201).json({
+  return res.status(result.code).json({
     message: result.message,
     requireRelogin: result.requireRelogin,
     data: result.data,
@@ -38,6 +42,7 @@ export const handleUpdateProfilePicture = async (
   }
   return res.status(result.code).json({
     message: result.message,
+    requireRelogin: result.requireRelogin,
     data: result.data,
   });
 };

@@ -32,9 +32,12 @@ export const getProfile = async (
 
     return {
       message: "Fetch profile successfully",
+      requireRelogin: false,
+      code: 200,
       data: {
         fullName: userFindId.full_name,
         email: userFindId.email,
+        profilePicture: userFindId.profile_picture,
       },
     };
   } catch (error: any) {
@@ -147,13 +150,12 @@ export const updateProfile = async (
       message: isEmailChanged
         ? "Verification email sent to your new email address"
         : "Update profile successfully",
-
       requireRelogin: isEmailChanged,
-
+      code: 201,
       data: {
         fullName: user.full_name,
-
         email: isEmailChanged ? email : user.email,
+        profilePicture: user.profile_picture,
       },
     };
   } catch (error: any) {
@@ -225,8 +227,11 @@ export const updateProfilePicture = async (
 
     return {
       message: "Profile picture updated successfully",
-      code: 200,
+      code: 201,
+      requireRelogin: false,
       data: {
+        fullName: user.full_name,
+        email: user.email,
         profilePicture: user.profile_picture,
       },
     };
