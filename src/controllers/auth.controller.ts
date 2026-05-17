@@ -50,6 +50,25 @@ export const activateAccount = async (req: Request, res: Response) => {
   );
 };
 
+export const reActivateAccount = async (req: Request, res: Response) => {
+  const { code } = req.query;
+
+  const result = await authService.reActivateUser(code as string);
+
+  if (result.error) {
+    return res.redirect(
+      `${CLIENT_HOST}/login?status=error&message=${encodeURIComponent(
+        result.message || "Invalid activation token",
+      )}`,
+    );
+  }
+  return res.redirect(
+    `${CLIENT_HOST}/login?status=success&message=${encodeURIComponent(
+      "Account activated successfully",
+    )}`,
+  );
+};
+
 export const handleChangePassword = async (req: AuthRequest, res: Response) => {
   const id = req.user.id;
   const { currentPassword, newPassword, confirmPassword } = req.body;
@@ -60,9 +79,11 @@ export const handleChangePassword = async (req: AuthRequest, res: Response) => {
     confirmPassword,
   });
   if (result.error) {
-    return res
-      .status(result.code)
-      .json({ code: result.code, message: result.message });
+    return res.status(result.code).json({ message: result.message });
   }
-  return res.status(result.code).json(result);
+  return res.status(result.code).json({
+    message: result.message,
+    data: result.data,
+    requireRelogin: result.requireRelogin,
+  });
 };

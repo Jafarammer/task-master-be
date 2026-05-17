@@ -118,6 +118,21 @@ export const activateUser = async (
   }
 
   user.is_active = true;
+  user.activationCode = null;
+  await user.save();
+
+  return { message: "Account activated successfully" };
+};
+
+export const reActivateUser = async (
+  code: string,
+): Promise<IProfileServiceResult> => {
+  const user = await User.findOne({ activationCode: code });
+
+  if (!user) {
+    return { error: true, code: 400, message: "Invalid activation code" };
+  }
+  user.is_active = true;
   user.email = user.pending_mail;
   user.pending_mail = null;
   user.activationCode = null;
@@ -200,8 +215,11 @@ export const changePassword = async (
     return {
       code: 201,
       message: "Password changed successfully",
+      requireRelogin: true,
       data: {
-        requireRelogin: true,
+        fullName: user.full_name,
+        email: user.email,
+        profilePicture: user.profile_picture,
       },
     };
   } catch (error: any) {

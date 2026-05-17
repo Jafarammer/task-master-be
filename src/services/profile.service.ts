@@ -113,7 +113,7 @@ export const updateProfile = async (
     if (isEmailChanged) {
       const emailChangeCode = crypto.randomBytes(32).toString("hex");
 
-      const verificationLink = `${VERIFICATION_HOST}/api/auth/activate?code=${emailChangeCode}`;
+      const verificationLink = `${VERIFICATION_HOST}/api/auth/reactivate?code=${emailChangeCode}`;
 
       user.pending_mail = email;
 
