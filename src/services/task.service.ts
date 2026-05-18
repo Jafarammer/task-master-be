@@ -1,14 +1,7 @@
 import Task, { ITask } from "../models/task.model";
 import mongoose, { Types } from "mongoose";
+import { ITaskServiceResult } from "../types/task";
 import { taskAdapter } from "../adapters/task.adapter";
-
-interface IServiceResult {
-  error?: boolean;
-  code?: number;
-  message?: string;
-  data?: ITask | ITask[] | null;
-  pagination?: object;
-}
 
 interface IGetTaskParams {
   user_id: Types.ObjectId | string | undefined;
@@ -30,18 +23,18 @@ interface ISearchTaskParams {
 }
 
 export const createTask = async (
-  user_id: Types.ObjectId | string,
+  user_id: string,
   title: string,
   description: string,
   due_date: Date | string,
   priority: string,
-): Promise<IServiceResult> => {
+): Promise<ITaskServiceResult> => {
   try {
     if (!user_id || !title || !description || !due_date) {
       return {
         error: true,
-        code: 404,
-        message: "user_id, title, description,dan due_date is required.",
+        code: 400,
+        message: "All fields are required",
       };
     }
     const allowed: string[] = ["low", "medium", "high"];
@@ -81,7 +74,7 @@ export const updateTask = async (
   description?: string,
   due_date?: Date | string,
   priority?: string,
-): Promise<IServiceResult> => {
+): Promise<ITaskServiceResult> => {
   try {
     if (!id || !mongoose.isValidObjectId(String(id))) {
       return { error: true, code: 400, message: "Invalid or missing id" };
@@ -144,7 +137,7 @@ export const getTask = async ({
   sort_by = "createdAt",
   order = "desc",
   query,
-}: IGetTaskParams): Promise<IServiceResult> => {
+}: IGetTaskParams): Promise<ITaskServiceResult> => {
   try {
     if (!user_id) {
       return { error: true, code: 404, message: "Unauthorized user." };
@@ -174,7 +167,7 @@ export const getTask = async ({
         total,
         total_pages: Math.ceil(total / limit),
       },
-    } as unknown as IServiceResult;
+    } as unknown as ITaskServiceResult;
   } catch (error) {
     return { error: true, code: 500, message: "Internal server error" };
   }
@@ -187,7 +180,7 @@ export const searchTask = async ({
   limit = 5,
   sort_by = "createdAt",
   order = "desc",
-}: ISearchTaskParams): Promise<IServiceResult> => {
+}: ISearchTaskParams): Promise<ITaskServiceResult> => {
   try {
     if (!user_id) {
       return { error: true, code: 404, message: "Unauthorized user." };
@@ -219,7 +212,7 @@ export const searchTask = async ({
         total,
         total_pages: Math.ceil(total / limit),
       },
-    } as unknown as IServiceResult;
+    } as unknown as ITaskServiceResult;
   } catch (error) {
     return { error: true, code: 500, message: "Internal server error" };
   }
@@ -228,7 +221,7 @@ export const searchTask = async ({
 export const softDeleteTask = async (
   user_id: string,
   task_id: string,
-): Promise<IServiceResult> => {
+): Promise<ITaskServiceResult> => {
   try {
     if (!user_id || !task_id) {
       return {
@@ -283,7 +276,7 @@ export const softDeleteTask = async (
 export const restoreTask = async (
   user_id: string,
   task_id: string,
-): Promise<IServiceResult> => {
+): Promise<ITaskServiceResult> => {
   try {
     if (!user_id || !task_id) {
       return {
@@ -328,7 +321,7 @@ export const restoreTask = async (
 export const hardDeleteTask = async (
   user_id: string,
   task_id: string,
-): Promise<IServiceResult> => {
+): Promise<ITaskServiceResult> => {
   try {
     if (!user_id || !task_id) {
       return {
@@ -370,7 +363,7 @@ export const updateTaskStatus = async (
   user_id: string,
   task_id: string,
   is_completed: boolean,
-): Promise<IServiceResult> => {
+): Promise<ITaskServiceResult> => {
   try {
     if (!user_id || !task_id) {
       return {
@@ -426,7 +419,7 @@ export const getTaskCompleted = async ({
   sort_by = "createdAt",
   order = "desc",
   query,
-}: IGetTaskParams): Promise<IServiceResult> => {
+}: IGetTaskParams): Promise<ITaskServiceResult> => {
   try {
     if (!user_id) {
       return { error: true, code: 400, message: '"user_id is required."' };
@@ -463,7 +456,7 @@ export const getTaskCompleted = async ({
         total,
         total_pages: Math.ceil(total / limit),
       },
-    } as unknown as IServiceResult;
+    } as unknown as ITaskServiceResult;
   } catch (error) {
     return { error: true, code: 500, message: "Internal server error" };
   }
@@ -476,7 +469,7 @@ export const getTaskPending = async ({
   sort_by = "createdAt",
   order = "desc",
   query = "",
-}: IGetTaskParams): Promise<IServiceResult> => {
+}: IGetTaskParams): Promise<ITaskServiceResult> => {
   try {
     if (!user_id) {
       return { error: true, code: 400, message: '"user_id is required."' };
@@ -513,7 +506,7 @@ export const getTaskPending = async ({
         total,
         total_pages: Math.ceil(total / limit),
       },
-    } as unknown as IServiceResult;
+    } as unknown as ITaskServiceResult;
   } catch (error) {
     return { error: true, code: 500, message: "Internal server error" };
   }
@@ -522,7 +515,7 @@ export const getTaskPending = async ({
 export const taskDetail = async ({
   user_id,
   task_id,
-}: IGetTaskParams): Promise<IServiceResult> => {
+}: IGetTaskParams): Promise<ITaskServiceResult> => {
   try {
     if (!user_id) {
       return { error: true, code: 400, message: "User id is required!" };

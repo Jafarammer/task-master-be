@@ -87,3 +87,27 @@ export const handleChangePassword = async (req: AuthRequest, res: Response) => {
     requireRelogin: result.requireRelogin,
   });
 };
+
+export const handleForgotPassword = async (req: Request, res: Response) => {
+  const payload = {
+    email: req.body.email,
+  };
+  const result = await authService.forgotPassword(payload);
+  if (result.error) {
+    return res.status(result.code).json({ message: result.message });
+  }
+  return res.status(result.code).json({ message: result.message });
+};
+
+export const handleResetPassword = async (req: Request, res: Response) => {
+  const payload = {
+    token: req.body.token,
+    newPassword: req.body.newPassword,
+    confirmPassword: req.body.confirmPassword,
+  };
+  const result = await authService.resetPassword(payload);
+  if (result.error) {
+    return res.status(result.code).json({ message: result.message });
+  }
+  return res.status(result.code).json({ message: result.message });
+};

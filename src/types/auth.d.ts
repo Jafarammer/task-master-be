@@ -23,3 +23,13 @@ export interface IChangePasswordPayload {
   newPassword: string;
   confirmPassword: string;
 }
+
+export interface IForgotPasswordPayload {
+  email: string;
+}
+
+export interface IResetPasswordPayload {
+  token: string;
+  newPassword: string;
+  confirmPassword: string;
+}

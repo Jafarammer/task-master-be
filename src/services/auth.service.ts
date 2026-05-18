@@ -1,13 +1,23 @@
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import mongoose from "mongoose";
-import User, { IUser } from "../models/user.model";
-import { IProfileServiceResult, IChangePasswordPayload } from "../types/auth";
+import User from "../models/user.model";
+import {
+  IProfileServiceResult,
+  IChangePasswordPayload,
+  IForgotPasswordPayload,
+  IResetPasswordPayload,
+  RegisterPayload,
+} from "../types/auth";
 import { createAccessToken, AccessPayload } from "../utils/tokens";
-import { RegisterPayload } from "../types/auth";
 import { validateRegister } from "../helpers/auth.helper";
 import { sendMail, renderMailHtml } from "../utils/mail/mail";
+import {
+  sendMailForgotPassword,
+  renderForgotPasswordMailHtml,
+} from "../utils/mail/forgotPasswordMail";
 import { CLIENT_HOST, EMAIL_SMTP_USER, VERIFICATION_HOST } from "../utils/env";
+import { error } from "console";
 
 export const registerUser = async (
   payload: RegisterPayload,
@@ -97,6 +107,9 @@ export const loginUser = async (
     };
 
     const accessToken = createAccessToken(payload);
+    user.reset_password_token = null;
+    user.reset_password_expired = null;
+    user.save();
 
     return {
       token: accessToken,
@@ -169,7 +182,7 @@ export const changePassword = async (
       return {
         error: true,
         code: 400,
-        message: "All fileds are required",
+        message: "All fields are required",
       };
     }
     if (newPassword !== confirmPassword) {
@@ -224,6 +237,144 @@ export const changePassword = async (
     };
   } catch (error: any) {
     console.error("CHANGE PASSWORD ERROR:", error);
+
+    return {
+      error: true,
+      code: 500,
+      message: "Internal server error",
+    };
+  }
+};
+
+export const forgotPassword = async (
+  payload: IForgotPasswordPayload,
+): Promise<IProfileServiceResult> => {
+  try {
+    const email = payload.email.trim().toLowerCase();
+    if (!email) {
+      return {
+        error: true,
+        code: 400,
+        message: "Email is required",
+      };
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return {
+        error: true,
+        code: 404,
+        message: "User not found",
+      };
+    }
+
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    user.reset_password_token = resetToken;
+    user.reset_password_expired = new Date(Date.now() + 1000 * 60 * 5);
+
+    await user.save();
+
+    const resetLink = `${CLIENT_HOST}/reset-password?token=${resetToken}`;
+    const contentMail = await renderForgotPasswordMailHtml(
+      "forgot-password-success.ejs",
+      { full_name: user.full_name, resetLink },
+    );
+    await sendMailForgotPassword({
+      from: EMAIL_SMTP_USER,
+      to: user.email,
+      subject: "Reset Your Password",
+      html: contentMail,
+    });
+
+    return {
+      code: 200,
+      message: "Reset password email sent",
+    };
+  } catch (error: any) {
+    console.error("FORGOT PASSWORD ERROR:", error);
+
+    return {
+      error: true,
+      code: 500,
+      message: "Internal server error",
+    };
+  }
+};
+
+export const resetPassword = async (
+  payload: IResetPasswordPayload,
+): Promise<IProfileServiceResult> => {
+  try {
+    const token = payload.token.trim();
+    const newPassword = payload.newPassword.trim();
+    const confirmPassword = payload.confirmPassword.trim();
+    if (!token) {
+      return {
+        error: true,
+        code: 400,
+        message: "Token not valid",
+      };
+    }
+    if (!newPassword || !confirmPassword) {
+      return {
+        error: true,
+        code: 400,
+        message: "All fields are required",
+      };
+    }
+    if (newPassword !== confirmPassword) {
+      return {
+        error: true,
+        code: 400,
+        message: "Confirm password does not match",
+      };
+    }
+
+    const user = await User.findOne({ reset_password_token: token });
+    if (!user) {
+      return {
+        error: true,
+        code: 400,
+        message: "Invalid reset token",
+      };
+    }
+
+    if (
+      !user.reset_password_expired ||
+      user.reset_password_expired < new Date()
+    ) {
+      user.reset_password_token = null;
+      user.reset_password_expired = null;
+      await user.save();
+      return {
+        error: true,
+        code: 400,
+        message: "Reset token expired",
+      };
+    }
+
+    const isSamePassword = await bcrypt.compare(newPassword, user.password);
+    if (isSamePassword) {
+      return {
+        error: true,
+        code: 400,
+        message: "New password cannot be the same as current password",
+      };
+    }
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    user.reset_password_token = null;
+    user.reset_password_expired = null;
+    user.refreshToken = null;
+
+    await user.save();
+
+    return {
+      code: 200,
+      message: "Password reset successfully",
+    };
+  } catch (error: any) {
+    console.error("RESET PASSWORD ERROR:", error);
 
     return {
       error: true,

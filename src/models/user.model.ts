@@ -8,6 +8,8 @@ export interface IUser extends Document {
   is_active: boolean;
   activationCode?: string | null;
   profile_picture?: string | null;
+  reset_password_token?: string | null;
+  reset_password_expired?: Date | null;
   refreshToken?: string | null;
   createdAt?: Date;
   updatedAt?: Date;
@@ -29,6 +31,8 @@ const userSchema = new Schema<IUser>(
       default: null,
     },
     profile_picture: { type: String, default: null },
+    reset_password_token: { type: String, default: null },
+    reset_password_expired: { type: Date, default: null },
   },
   { timestamps: true },
 );
