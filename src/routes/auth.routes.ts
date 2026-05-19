@@ -1,7 +1,7 @@
 import { Router } from "express";
 
 import {
-  authRegister,
+  handleRegister,
   handleLogin,
   activateAccount,
   reActivateAccount,
@@ -15,7 +15,7 @@ import { authToken } from "../middleware/authMiddleware";
 const router = Router();
 
 router.post("/login", handleLogin);
-router.post("/register", authRegister);
+router.post("/register", handleRegister);
 router.get("/activate", activateAccount);
 router.get("/reactivate", reActivateAccount);
 router.patch("/change-password", authToken, handleChangePassword);

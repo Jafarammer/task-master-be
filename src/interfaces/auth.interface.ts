@@ -17,3 +17,10 @@ export interface IAccessPayload extends JwtPayload {
   id: string;
   email: string;
 }
+
+export interface IRegisterPayload {
+  fullName: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}

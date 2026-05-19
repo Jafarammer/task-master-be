@@ -1,23 +1,9 @@
 import { Request, Response } from "express";
 import { AuthRequest } from "../middleware/authMiddleware";
 import { ILoginPayload } from "../interfaces/auth.interface";
+import { registerValidation } from "../validations/auth.validate";
 import * as authService from "../services/auth.service";
 import { CLIENT_HOST } from "../utils/env";
-
-export const authRegister = async (req: Request, res: Response) => {
-  const { fullName, email, password } = req.body;
-  const result = await authService.registerUser({
-    fullName,
-    email,
-    password,
-  });
-
-  if (result.error) {
-    return res.status(result.code).json({ message: result.message });
-  }
-
-  return res.status(201).json({ message: result.message });
-};
 
 export const handleLogin = async (req: Request, res: Response) => {
   const payload: ILoginPayload = {
@@ -33,6 +19,24 @@ export const handleLogin = async (req: Request, res: Response) => {
   return res
     .status(result.code)
     .json({ accessToken: result.token, message: result.message });
+};
+
+export const handleRegister = async (req: Request, res: Response) => {
+  const validated = registerValidation.safeParse(req.body);
+  if (!validated.success) {
+    return res.status(400).json({
+      error: true,
+      message: validated.error.issues[0].message,
+      errors: validated.error.flatten(),
+    });
+  }
+
+  const result = await authService.registerUser(validated.data);
+  if (result.error) {
+    return res.status(result.code).json({ message: result.message });
+  }
+
+  return res.status(201).json({ message: result.message });
 };
 
 export const activateAccount = async (req: Request, res: Response) => {

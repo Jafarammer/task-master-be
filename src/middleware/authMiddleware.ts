@@ -1,16 +1,16 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import { AccessPayload } from "../utils/tokens";
+import { IAccessPayload } from "../interfaces/auth.interface";
 import { JWT_SECRET } from "../utils/env";
 
 export interface AuthRequest extends Request {
-  user?: AccessPayload;
+  user?: IAccessPayload;
 }
 
 export const authToken = (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   const authHeader = req.headers.authorization;
 
@@ -24,7 +24,7 @@ export const authToken = (
   }
 
   try {
-    const decode = jwt.verify(token, JWT_SECRET as string) as AccessPayload;
+    const decode = jwt.verify(token, JWT_SECRET as string) as IAccessPayload;
 
     req.user = decode;
 

@@ -13,6 +13,7 @@ import {
   IAuthResultService,
   ILoginPayload,
   IAccessPayload,
+  IRegisterPayload,
 } from "../interfaces/auth.interface";
 import { createAccessToken } from "../utils/tokens";
 import { validateRegister } from "../helpers/auth.helper";
@@ -79,17 +80,12 @@ export const loginUser = async (
 };
 
 export const registerUser = async (
-  payload: RegisterPayload,
-): Promise<IProfileServiceResult> => {
+  payload: IRegisterPayload,
+): Promise<IAuthResultService> => {
   try {
     const existing = await User.findOne({ email: payload.email });
     if (existing) {
       return { error: true, code: 409, message: "Email already registered" };
-    }
-
-    const resultValidation = validateRegister(payload);
-    if (!resultValidation.valid) {
-      return { error: true, code: 400, message: resultValidation.message };
     }
 
     const hashedPassword = await bcrypt.hash(payload.password, 10);
@@ -123,6 +119,7 @@ export const registerUser = async (
     await user.save();
 
     return {
+      code: 201,
       message: "Registered successfully. Check your email to activate account.",
     };
   } catch (error) {
