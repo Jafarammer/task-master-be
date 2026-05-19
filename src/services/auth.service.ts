@@ -9,7 +9,12 @@ import {
   IResetPasswordPayload,
   RegisterPayload,
 } from "../types/auth";
-import { createAccessToken, AccessPayload } from "../utils/tokens";
+import {
+  IAuthResultService,
+  ILoginPayload,
+  IAccessPayload,
+} from "../interfaces/auth.interface";
+import { createAccessToken } from "../utils/tokens";
 import { validateRegister } from "../helpers/auth.helper";
 import { sendMail, renderMailHtml } from "../utils/mail/mail";
 import {
@@ -17,7 +22,61 @@ import {
   renderForgotPasswordMailHtml,
 } from "../utils/mail/forgotPasswordMail";
 import { CLIENT_HOST, EMAIL_SMTP_USER, VERIFICATION_HOST } from "../utils/env";
-import { error } from "console";
+
+export const loginUser = async (
+  payload: ILoginPayload,
+): Promise<IAuthResultService> => {
+  try {
+    const email = payload.email.trim().toLowerCase();
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return {
+        error: true,
+        code: 400,
+        message: "Email or password is invalid",
+      };
+    }
+    if (!user.is_active) {
+      return {
+        error: true,
+        code: 403,
+        message: "Please activate your account via email",
+      };
+    }
+
+    const match = await bcrypt.compare(payload.password, user.password);
+
+    if (!match) {
+      return {
+        error: true,
+        code: 400,
+        message: "Email or password is invalid",
+      };
+    }
+
+    const accessPayload: IAccessPayload = {
+      id: user._id.toString(),
+      email: user.email,
+    };
+
+    const accessToken = createAccessToken(accessPayload);
+    user.reset_password_token = null;
+    user.reset_password_expired = null;
+    user.save();
+
+    return {
+      code: 201,
+      token: accessToken,
+      data: user,
+      message: `Welcome ${user.full_name}`,
+    };
+  } catch (error: any) {
+    console.error("LOGIN ERROR:", error);
+    return { error: true, code: 500, message: "Internal server error" };
+  }
+};
 
 export const registerUser = async (
   payload: RegisterPayload,
@@ -74,50 +133,6 @@ export const registerUser = async (
       code: 500,
       message: "Internal server error",
     };
-  }
-};
-
-export const loginUser = async (
-  email: string,
-  password: string,
-): Promise<IProfileServiceResult> => {
-  try {
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      return { error: true, code: 400, message: "Invalid email" };
-    }
-    if (!user.is_active) {
-      return {
-        error: true,
-        code: 403,
-        message: "Please activate your account via email",
-      };
-    }
-
-    const match = await bcrypt.compare(password, user.password);
-
-    if (!match) {
-      return { error: true, code: 400, message: "Invalid password" };
-    }
-
-    const payload: AccessPayload = {
-      id: user._id.toString(),
-      email: user.email,
-    };
-
-    const accessToken = createAccessToken(payload);
-    user.reset_password_token = null;
-    user.reset_password_expired = null;
-    user.save();
-
-    return {
-      token: accessToken,
-      data: user,
-      message: `Welcome back ${user.full_name}`,
-    };
-  } catch (error) {
-    return { error: true, code: 500, message: "Internal server error" };
   }
 };
 

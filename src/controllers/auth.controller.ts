@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { AuthRequest } from "../middleware/authMiddleware";
+import { ILoginPayload } from "../interfaces/auth.interface";
 import * as authService from "../services/auth.service";
 import { CLIENT_HOST } from "../utils/env";
 
@@ -18,16 +19,19 @@ export const authRegister = async (req: Request, res: Response) => {
   return res.status(201).json({ message: result.message });
 };
 
-export const authLogin = async (req: Request, res: Response) => {
-  const { email, password } = req.body;
-  const result = await authService.loginUser(email, password);
+export const handleLogin = async (req: Request, res: Response) => {
+  const payload: ILoginPayload = {
+    email: req.body.email,
+    password: req.body.password,
+  };
+  const result = await authService.loginUser(payload);
 
   if (result.error) {
     return res.status(result.code).json({ message: result.message });
   }
 
   return res
-    .status(201)
+    .status(result.code)
     .json({ accessToken: result.token, message: result.message });
 };
 

@@ -1,12 +1,8 @@
-import jwt, { JwtPayload } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../utils/env";
+import { IAccessPayload } from "../interfaces/auth.interface";
 
-export interface AccessPayload extends JwtPayload {
-  id: string;
-  email: string;
-}
-
-export const createAccessToken = (payload: AccessPayload): string => {
+export const createAccessToken = (payload: IAccessPayload): string => {
   return jwt.sign(payload, JWT_SECRET, {
     expiresIn: "1d",
   });

@@ -33,3 +33,22 @@ export interface IResetPasswordPayload {
   newPassword: string;
   confirmPassword: string;
 }
+
+// new setup
+export interface IAuthResultService {
+  token?: string;
+  error?: boolean;
+  code?: number;
+  message?: string;
+  data?: unknown;
+}
+
+export interface ILoginPayload {
+  email: string;
+  password: string;
+}
+
+export interface IAccessPayload {
+  id: string;
+  email: string;
+}
