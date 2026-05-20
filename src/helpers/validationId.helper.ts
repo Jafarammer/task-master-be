@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const validateId = (id: string) => {
+const validationId = (id: string) => {
   const normalizedId = String(id ?? "").trim();
   if (!normalizedId) {
     return {
@@ -20,4 +20,4 @@ const validateId = (id: string) => {
   };
 };
 
-export default validateId;
+export default validationId;

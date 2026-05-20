@@ -3,7 +3,6 @@ import crypto from "crypto";
 import User from "../models/user.model";
 import {
   ILoginPayload,
-  IAccessPayload,
   IRegisterPayload,
   ILoginResponse,
   IRedirectResponse,
@@ -19,7 +18,7 @@ import {
   renderForgotPasswordMailHtml,
 } from "../utils/mail/forgotPasswordMail";
 import { CLIENT_HOST, EMAIL_SMTP_USER, VERIFICATION_HOST } from "../utils/env";
-import validateId from "../helpers/validateId.helper";
+import validationId from "../helpers/validationId.helper";
 
 export const loginUser = async (
   payload: ILoginPayload,
@@ -57,12 +56,10 @@ export const loginUser = async (
       };
     }
 
-    const accessPayload: IAccessPayload = {
+    const accessToken = createAccessToken({
       id: user._id.toString(),
       email: user.email,
-    };
-
-    const accessToken = createAccessToken(accessPayload);
+    });
     user.reset_password_token = null;
     user.reset_password_expired = null;
     user.save();
@@ -196,7 +193,7 @@ export const changePassword = async (
   payload: IChangePasswordPayload,
 ): Promise<IServiceResult> => {
   try {
-    const validatedId = validateId(id);
+    const validatedId = validationId(id);
     if (!validatedId.valid) {
       return {
         error: true,
