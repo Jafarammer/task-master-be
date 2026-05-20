@@ -26,7 +26,7 @@ export const handleLogin = async (req: Request, res: Response) => {
 
   return res
     .status(result.code)
-    .json({ accessToken: result.token, message: result.message });
+    .json({ accessToken: result.data.token, message: result.message });
 };
 
 export const handleRegister = async (req: Request, res: Response) => {
@@ -53,9 +53,9 @@ export const activateAccount = async (req: Request, res: Response) => {
   const result = await authService.activateUser(code as string);
 
   if (result.error) {
-    return res.redirect(result.redirectUrl);
+    return res.redirect(result.data.redirectUrl);
   }
-  return res.redirect(result.redirectUrl);
+  return res.redirect(result.data.redirectUrl);
 };
 
 export const reActivateAccount = async (req: Request, res: Response) => {
@@ -64,9 +64,9 @@ export const reActivateAccount = async (req: Request, res: Response) => {
   const result = await authService.reActivateUser(code as string);
 
   if (result.error) {
-    return res.redirect(result.redirectUrl);
+    return res.redirect(result.data.redirectUrl);
   }
-  return res.redirect(result.redirectUrl);
+  return res.redirect(result.data.redirectUrl);
 };
 
 export const handleChangePassword = async (req: AuthRequest, res: Response) => {
@@ -86,7 +86,7 @@ export const handleChangePassword = async (req: AuthRequest, res: Response) => {
   }
   return res.status(result.code).json({
     message: result.message,
-    data: result.data,
+    data: result.data.requireRelogin,
   });
 };
 

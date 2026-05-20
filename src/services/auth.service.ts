@@ -1,11 +1,8 @@
-import bcrypt from "bcrypt";
 import crypto from "crypto";
 import User from "../models/user.model";
 import {
   ILoginPayload,
   IRegisterPayload,
-  ILoginResponse,
-  IRedirectResponse,
   IChangePasswordPayload,
   IForgotPasswordPayload,
   IResetPasswordPayload,
@@ -19,41 +16,32 @@ import {
 } from "../utils/mail/forgotPasswordMail";
 import { CLIENT_HOST, EMAIL_SMTP_USER, VERIFICATION_HOST } from "../utils/env";
 import validationId from "../helpers/validationId.helper";
+import {
+  comparePassword,
+  hashPassword,
+  normalizeEmail,
+} from "../helpers/auth.helper";
+import { successResponse, errorResponse } from "../helpers/response.helper";
 
 export const loginUser = async (
   payload: ILoginPayload,
-): Promise<ILoginResponse> => {
+): Promise<IServiceResult<{ token: string }>> => {
   try {
-    const email = payload.email.trim().toLowerCase();
+    const email = normalizeEmail(payload.email);
 
     const user = await User.findOne({ email });
 
     if (!user) {
-      return {
-        error: true,
-        code: 400,
-        token: null,
-        message: "Email or password is invalid",
-      };
+      return errorResponse("Email or password is invalid", 400);
     }
     if (!user.is_active) {
-      return {
-        error: true,
-        code: 403,
-        token: null,
-        message: "Please activate your account via email",
-      };
+      return errorResponse("Please activate your account via email", 403);
     }
 
-    const match = await bcrypt.compare(payload.password, user.password);
+    const match = await comparePassword(payload.password, user.password);
 
     if (!match) {
-      return {
-        error: true,
-        token: null,
-        code: 400,
-        message: "Email or password is invalid",
-      };
+      return errorResponse("Email or password is invalid", 400);
     }
 
     const accessToken = createAccessToken({
@@ -64,20 +52,12 @@ export const loginUser = async (
     user.reset_password_expired = null;
     user.save();
 
-    return {
-      error: false,
-      code: 201,
+    return successResponse(`Welcome ${user.full_name}`, 200, {
       token: accessToken,
-      message: `Welcome ${user.full_name}`,
-    };
+    });
   } catch (error: any) {
     console.error("LOGIN ERROR:", error);
-    return {
-      error: true,
-      code: 500,
-      token: null,
-      message: "Internal server error",
-    };
+    return errorResponse("Internal server error", 500);
   }
 };
 
@@ -85,12 +65,13 @@ export const registerUser = async (
   payload: IRegisterPayload,
 ): Promise<IServiceResult> => {
   try {
-    const existing = await User.findOne({ email: payload.email });
+    const email = normalizeEmail(payload.email);
+    const existing = await User.findOne({ email: email });
     if (existing) {
-      return { error: true, code: 409, message: "Email already registered" };
+      return errorResponse("Email already registered", 409);
     }
 
-    const hashedPassword = await bcrypt.hash(payload.password, 10);
+    const hashedPassword = await hashPassword(payload.password);
 
     const activationCode = crypto.randomBytes(32).toString("hex");
 
@@ -120,59 +101,45 @@ export const registerUser = async (
 
     await user.save();
 
-    return {
-      error: false,
-      code: 201,
-      message: "Registered successfully. Check your email to activate account.",
-    };
+    return successResponse(
+      "Registered successfully. Check your email to activate account.",
+      201,
+    );
   } catch (error) {
     console.error("REGISTER ERROR:", error);
-    return {
-      error: true,
-      code: 500,
-      message: "Internal server error",
-    };
+    return errorResponse("Internal server error", 500);
   }
 };
 
 export const activateUser = async (
   code: string,
-): Promise<IRedirectResponse> => {
+): Promise<IServiceResult<{ redirectUrl: string }>> => {
   const user = await User.findOne({ activationCode: code });
 
   if (!user) {
-    return {
-      error: true,
-      code: 400,
+    return errorResponse("Invalid activation code", 400, {
       redirectUrl: `${CLIENT_HOST}/login?status=error&message=${encodeURIComponent("Invalid activation token")}`,
-      message: "Invalid activation code",
-    };
+    });
   }
 
   user.is_active = true;
   user.activationCode = null;
   await user.save();
 
-  return {
-    error: false,
-    code: 200,
+  return successResponse("Account activated successfully", 200, {
     redirectUrl: `${CLIENT_HOST}/login?status=success&message=${encodeURIComponent("Account activated successfully")}`,
-    message: "Account activated successfully",
-  };
+  });
 };
 
 export const reActivateUser = async (
   code: string,
-): Promise<IRedirectResponse> => {
+): Promise<IServiceResult<{ redirectUrl: string }>> => {
   const user = await User.findOne({ activationCode: code });
 
   if (!user) {
-    return {
-      error: true,
-      code: 400,
+    return errorResponse("Invalid activation code", 400, {
       redirectUrl: `${CLIENT_HOST}/login?status=error&message=${encodeURIComponent("Invalid activation account")}`,
-      message: "Invalid activation code",
-    };
+    });
   }
   user.is_active = true;
   user.email = user.pending_mail;
@@ -180,79 +147,56 @@ export const reActivateUser = async (
   user.activationCode = null;
   await user.save();
 
-  return {
-    error: false,
-    code: 200,
+  return successResponse("Account activated successfully", 200, {
     redirectUrl: `${CLIENT_HOST}/login?status=success&message=${encodeURIComponent("Account activated successfully")}`,
-    message: "Account activated successfully",
-  };
+  });
 };
 
 export const changePassword = async (
   id: string,
   payload: IChangePasswordPayload,
-): Promise<IServiceResult> => {
+): Promise<IServiceResult<{ requireRelogin: boolean }>> => {
   try {
     const validatedId = validationId(id);
     if (!validatedId.valid) {
-      return {
-        error: true,
-        code: 400,
-        message: validatedId.message,
-      };
+      return errorResponse(validatedId.message, 400);
     }
-
-    const currentPassword = payload?.currentPassword?.trim();
-    const newPassword = payload?.newPassword?.trim();
 
     const user = await User.findById(validatedId.value);
     if (!user) {
-      return {
-        error: true,
-        code: 404,
-        message: "User not found",
-      };
+      return errorResponse("User not found", 404);
     }
 
-    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    const isMatch = await comparePassword(
+      payload.currentPassword,
+      user.password,
+    );
     if (!isMatch) {
-      return {
-        error: true,
-        code: 400,
-        message: "Current password is incorrect",
-      };
+      return errorResponse("Current password is incorrect", 400);
     }
 
-    const isSamePassword = await bcrypt.compare(newPassword, user.password);
+    const isSamePassword = await comparePassword(
+      payload.newPassword,
+      user.password,
+    );
     if (isSamePassword) {
-      return {
-        error: true,
-        code: 400,
-        message: "New password cannot be the same as current password",
-      };
+      return errorResponse(
+        "New password cannot be the same as current password",
+        400,
+      );
     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const hashedPassword = await hashPassword(payload.newPassword);
     user.password = hashedPassword;
     user.refreshToken = null;
     await user.save();
 
-    return {
-      error: false,
-      code: 201,
-      message: "Password changed successfully",
-      data: {
-        requireRelogin: true,
-      },
-    };
+    return successResponse("Password changed successfully", 201, {
+      requireRelogin: true,
+    });
   } catch (error: any) {
     console.error("CHANGE PASSWORD ERROR:", error);
-
-    return {
-      error: true,
-      code: 500,
-      message: "Internal server error",
-    };
+    return errorResponse("Internal server error", 500);
   }
 };
 
@@ -260,15 +204,11 @@ export const forgotPassword = async (
   payload: IForgotPasswordPayload,
 ): Promise<IServiceResult> => {
   try {
-    const email = payload.email.trim().toLowerCase();
+    const email = normalizeEmail(payload.email);
 
     const user = await User.findOne({ email });
     if (!user) {
-      return {
-        error: true,
-        code: 404,
-        message: "User not found",
-      };
+      return errorResponse("User not found", 404);
     }
 
     const resetToken = crypto.randomBytes(32).toString("hex");
@@ -289,18 +229,10 @@ export const forgotPassword = async (
       html: contentMail,
     });
 
-    return {
-      error: false,
-      code: 200,
-      message: "Reset password email sent",
-    };
+    return successResponse("Reset password email sent", 201);
   } catch (error: any) {
     console.error("FORGOT PASSWORD ERROR:", error);
-    return {
-      error: true,
-      code: 500,
-      message: "Internal server error",
-    };
+    return errorResponse("Internal server error", 500);
   }
 };
 
@@ -308,16 +240,13 @@ export const resetPassword = async (
   payload: IResetPasswordPayload,
 ): Promise<IServiceResult> => {
   try {
-    const token = payload.token.trim();
     const newPassword = payload.newPassword.trim();
 
-    const user = await User.findOne({ reset_password_token: token });
+    const user = await User.findOne({
+      reset_password_token: payload.token.trim(),
+    });
     if (!user) {
-      return {
-        error: true,
-        code: 400,
-        message: "Invalid reset token",
-      };
+      return errorResponse("Invalid reset token", 400);
     }
 
     if (
@@ -327,22 +256,17 @@ export const resetPassword = async (
       user.reset_password_token = null;
       user.reset_password_expired = null;
       await user.save();
-      return {
-        error: true,
-        code: 400,
-        message: "Reset token expired",
-      };
+      return errorResponse("Reset token expired", 400);
     }
 
-    const isSamePassword = await bcrypt.compare(newPassword, user.password);
+    const isSamePassword = await comparePassword(newPassword, user.password);
     if (isSamePassword) {
-      return {
-        error: true,
-        code: 400,
-        message: "New password cannot be the same as current password",
-      };
+      return errorResponse(
+        "New password cannot be the same as current password",
+        400,
+      );
     }
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const hashedPassword = await hashPassword(newPassword);
     user.password = hashedPassword;
     user.reset_password_token = null;
     user.reset_password_expired = null;
@@ -350,18 +274,10 @@ export const resetPassword = async (
 
     await user.save();
 
-    return {
-      error: false,
-      code: 201,
-      message: "Password reset successfully",
-    };
+    return successResponse("Password reset successfully", 201);
   } catch (error: any) {
     console.error("RESET PASSWORD ERROR:", error);
 
-    return {
-      error: true,
-      code: 500,
-      message: "Internal server error",
-    };
+    return errorResponse("Internal server error", 500);
   }
 };
