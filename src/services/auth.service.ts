@@ -1,6 +1,5 @@
 import bcrypt from "bcrypt";
 import crypto from "crypto";
-import mongoose from "mongoose";
 import User from "../models/user.model";
 import {
   ILoginPayload,
@@ -20,6 +19,7 @@ import {
   renderForgotPasswordMailHtml,
 } from "../utils/mail/forgotPasswordMail";
 import { CLIENT_HOST, EMAIL_SMTP_USER, VERIFICATION_HOST } from "../utils/env";
+import validateId from "../helpers/validateId.helper";
 
 export const loginUser = async (
   payload: ILoginPayload,
@@ -196,26 +196,19 @@ export const changePassword = async (
   payload: IChangePasswordPayload,
 ): Promise<IServiceResult> => {
   try {
-    const normalizedId = String(id ?? "").trim();
-    if (!normalizedId) {
+    const validatedId = validateId(id);
+    if (!validatedId.valid) {
       return {
         error: true,
         code: 400,
-        message: "Id is required",
-      };
-    }
-    if (!mongoose.isValidObjectId(normalizedId)) {
-      return {
-        error: true,
-        code: 400,
-        message: "Invalid id format",
+        message: validatedId.message,
       };
     }
 
     const currentPassword = payload?.currentPassword?.trim();
     const newPassword = payload?.newPassword?.trim();
 
-    const user = await User.findById(normalizedId);
+    const user = await User.findById(validatedId.value);
     if (!user) {
       return {
         error: true,
