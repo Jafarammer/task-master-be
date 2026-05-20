@@ -3,20 +3,17 @@ import crypto from "crypto";
 import mongoose from "mongoose";
 import User from "../models/user.model";
 import {
-  IProfileServiceResult,
-  IChangePasswordPayload,
-  IForgotPasswordPayload,
-  IResetPasswordPayload,
-  RegisterPayload,
-} from "../types/auth";
-import {
-  IAuthResultService,
   ILoginPayload,
   IAccessPayload,
   IRegisterPayload,
+  ILoginResponse,
+  IRedirectResponse,
+  IChangePasswordPayload,
+  IForgotPasswordPayload,
+  IResetPasswordPayload,
 } from "../interfaces/auth.interface";
+import { IServiceResult } from "../interfaces/common.interface";
 import { createAccessToken } from "../utils/tokens";
-import { validateRegister } from "../helpers/auth.helper";
 import { sendMail, renderMailHtml } from "../utils/mail/mail";
 import {
   sendMailForgotPassword,
@@ -26,7 +23,7 @@ import { CLIENT_HOST, EMAIL_SMTP_USER, VERIFICATION_HOST } from "../utils/env";
 
 export const loginUser = async (
   payload: ILoginPayload,
-): Promise<IAuthResultService> => {
+): Promise<ILoginResponse> => {
   try {
     const email = payload.email.trim().toLowerCase();
 
@@ -36,6 +33,7 @@ export const loginUser = async (
       return {
         error: true,
         code: 400,
+        token: null,
         message: "Email or password is invalid",
       };
     }
@@ -43,6 +41,7 @@ export const loginUser = async (
       return {
         error: true,
         code: 403,
+        token: null,
         message: "Please activate your account via email",
       };
     }
@@ -52,6 +51,7 @@ export const loginUser = async (
     if (!match) {
       return {
         error: true,
+        token: null,
         code: 400,
         message: "Email or password is invalid",
       };
@@ -68,20 +68,25 @@ export const loginUser = async (
     user.save();
 
     return {
+      error: false,
       code: 201,
       token: accessToken,
-      data: user,
       message: `Welcome ${user.full_name}`,
     };
   } catch (error: any) {
     console.error("LOGIN ERROR:", error);
-    return { error: true, code: 500, message: "Internal server error" };
+    return {
+      error: true,
+      code: 500,
+      token: null,
+      message: "Internal server error",
+    };
   }
 };
 
 export const registerUser = async (
   payload: IRegisterPayload,
-): Promise<IAuthResultService> => {
+): Promise<IServiceResult> => {
   try {
     const existing = await User.findOne({ email: payload.email });
     if (existing) {
@@ -119,12 +124,12 @@ export const registerUser = async (
     await user.save();
 
     return {
+      error: false,
       code: 201,
       message: "Registered successfully. Check your email to activate account.",
     };
   } catch (error) {
     console.error("REGISTER ERROR:", error);
-
     return {
       error: true,
       code: 500,
@@ -135,27 +140,42 @@ export const registerUser = async (
 
 export const activateUser = async (
   code: string,
-): Promise<IProfileServiceResult> => {
+): Promise<IRedirectResponse> => {
   const user = await User.findOne({ activationCode: code });
 
   if (!user) {
-    return { error: true, code: 400, message: "Invalid activation code" };
+    return {
+      error: true,
+      code: 400,
+      redirectUrl: `${CLIENT_HOST}/login?status=error&message=${encodeURIComponent("Invalid activation token")}`,
+      message: "Invalid activation code",
+    };
   }
 
   user.is_active = true;
   user.activationCode = null;
   await user.save();
 
-  return { message: "Account activated successfully" };
+  return {
+    error: false,
+    code: 200,
+    redirectUrl: `${CLIENT_HOST}/login?status=success&message=${encodeURIComponent("Account activated successfully")}`,
+    message: "Account activated successfully",
+  };
 };
 
 export const reActivateUser = async (
   code: string,
-): Promise<IProfileServiceResult> => {
+): Promise<IRedirectResponse> => {
   const user = await User.findOne({ activationCode: code });
 
   if (!user) {
-    return { error: true, code: 400, message: "Invalid activation code" };
+    return {
+      error: true,
+      code: 400,
+      redirectUrl: `${CLIENT_HOST}/login?status=error&message=${encodeURIComponent("Invalid activation account")}`,
+      message: "Invalid activation code",
+    };
   }
   user.is_active = true;
   user.email = user.pending_mail;
@@ -163,13 +183,18 @@ export const reActivateUser = async (
   user.activationCode = null;
   await user.save();
 
-  return { message: "Account activated successfully" };
+  return {
+    error: false,
+    code: 200,
+    redirectUrl: `${CLIENT_HOST}/login?status=success&message=${encodeURIComponent("Account activated successfully")}`,
+    message: "Account activated successfully",
+  };
 };
 
 export const changePassword = async (
   id: string,
   payload: IChangePasswordPayload,
-): Promise<IProfileServiceResult> => {
+): Promise<IServiceResult> => {
   try {
     const normalizedId = String(id ?? "").trim();
     if (!normalizedId) {
@@ -189,21 +214,6 @@ export const changePassword = async (
 
     const currentPassword = payload?.currentPassword?.trim();
     const newPassword = payload?.newPassword?.trim();
-    const confirmPassword = payload?.confirmPassword?.trim();
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      return {
-        error: true,
-        code: 400,
-        message: "All fields are required",
-      };
-    }
-    if (newPassword !== confirmPassword) {
-      return {
-        error: true,
-        code: 400,
-        message: "Confirm password does not match",
-      };
-    }
 
     const user = await User.findById(normalizedId);
     if (!user) {
@@ -238,13 +248,11 @@ export const changePassword = async (
     await user.save();
 
     return {
+      error: false,
       code: 201,
       message: "Password changed successfully",
-      requireRelogin: true,
       data: {
-        fullName: user.full_name,
-        email: user.email,
-        profilePicture: user.profile_picture,
+        requireRelogin: true,
       },
     };
   } catch (error: any) {
@@ -260,16 +268,9 @@ export const changePassword = async (
 
 export const forgotPassword = async (
   payload: IForgotPasswordPayload,
-): Promise<IProfileServiceResult> => {
+): Promise<IServiceResult> => {
   try {
     const email = payload.email.trim().toLowerCase();
-    if (!email) {
-      return {
-        error: true,
-        code: 400,
-        message: "Email is required",
-      };
-    }
 
     const user = await User.findOne({ email });
     if (!user) {
@@ -299,12 +300,12 @@ export const forgotPassword = async (
     });
 
     return {
+      error: false,
       code: 200,
       message: "Reset password email sent",
     };
   } catch (error: any) {
     console.error("FORGOT PASSWORD ERROR:", error);
-
     return {
       error: true,
       code: 500,
@@ -315,32 +316,10 @@ export const forgotPassword = async (
 
 export const resetPassword = async (
   payload: IResetPasswordPayload,
-): Promise<IProfileServiceResult> => {
+): Promise<IServiceResult> => {
   try {
     const token = payload.token.trim();
     const newPassword = payload.newPassword.trim();
-    const confirmPassword = payload.confirmPassword.trim();
-    if (!token) {
-      return {
-        error: true,
-        code: 400,
-        message: "Token not valid",
-      };
-    }
-    if (!newPassword || !confirmPassword) {
-      return {
-        error: true,
-        code: 400,
-        message: "All fields are required",
-      };
-    }
-    if (newPassword !== confirmPassword) {
-      return {
-        error: true,
-        code: 400,
-        message: "Confirm password does not match",
-      };
-    }
 
     const user = await User.findOne({ reset_password_token: token });
     if (!user) {
@@ -382,7 +361,8 @@ export const resetPassword = async (
     await user.save();
 
     return {
-      code: 200,
+      error: false,
+      code: 201,
       message: "Password reset successfully",
     };
   } catch (error: any) {

@@ -1,16 +1,24 @@
 import { Request, Response } from "express";
 import { AuthRequest } from "../middleware/authMiddleware";
-import { ILoginPayload } from "../interfaces/auth.interface";
-import { registerValidation } from "../validations/auth.validate";
+import {
+  registerValidation,
+  loginValidation,
+  changePasswordValidation,
+  forgotPasswordValidation,
+  resetPasswordValidation,
+} from "../validations/auth.validate";
 import * as authService from "../services/auth.service";
-import { CLIENT_HOST } from "../utils/env";
 
 export const handleLogin = async (req: Request, res: Response) => {
-  const payload: ILoginPayload = {
-    email: req.body.email,
-    password: req.body.password,
-  };
-  const result = await authService.loginUser(payload);
+  const validated = loginValidation.safeParse(req.body);
+  if (!validated.success) {
+    return res.status(400).json({
+      error: true,
+      message: validated.error.issues[0].message,
+      errors: validated.error.flatten(),
+    });
+  }
+  const result = await authService.loginUser(validated.data);
 
   if (result.error) {
     return res.status(result.code).json({ message: result.message });
@@ -36,7 +44,7 @@ export const handleRegister = async (req: Request, res: Response) => {
     return res.status(result.code).json({ message: result.message });
   }
 
-  return res.status(201).json({ message: result.message });
+  return res.status(result.code).json({ message: result.message });
 };
 
 export const activateAccount = async (req: Request, res: Response) => {
@@ -45,17 +53,9 @@ export const activateAccount = async (req: Request, res: Response) => {
   const result = await authService.activateUser(code as string);
 
   if (result.error) {
-    return res.redirect(
-      `${CLIENT_HOST}/login?status=error&message=${encodeURIComponent(
-        result.message || "Invalid activation token",
-      )}`,
-    );
+    return res.redirect(result.redirectUrl);
   }
-  return res.redirect(
-    `${CLIENT_HOST}/login?status=success&message=${encodeURIComponent(
-      "Account activated successfully",
-    )}`,
-  );
+  return res.redirect(result.redirectUrl);
 };
 
 export const reActivateAccount = async (req: Request, res: Response) => {
@@ -64,43 +64,43 @@ export const reActivateAccount = async (req: Request, res: Response) => {
   const result = await authService.reActivateUser(code as string);
 
   if (result.error) {
-    return res.redirect(
-      `${CLIENT_HOST}/login?status=error&message=${encodeURIComponent(
-        result.message || "Invalid activation token",
-      )}`,
-    );
+    return res.redirect(result.redirectUrl);
   }
-  return res.redirect(
-    `${CLIENT_HOST}/login?status=success&message=${encodeURIComponent(
-      "Account activated successfully",
-    )}`,
-  );
+  return res.redirect(result.redirectUrl);
 };
 
 export const handleChangePassword = async (req: AuthRequest, res: Response) => {
   const id = req.user.id;
-  const { currentPassword, newPassword, confirmPassword } = req.body;
+  const validated = changePasswordValidation.safeParse(req.body);
+  if (!validated.success) {
+    return res.status(400).json({
+      error: true,
+      message: validated.error.issues[0].message,
+      errors: validated.error.flatten(),
+    });
+  }
 
-  const result = await authService.changePassword(id, {
-    currentPassword,
-    newPassword,
-    confirmPassword,
-  });
+  const result = await authService.changePassword(id, validated.data);
   if (result.error) {
     return res.status(result.code).json({ message: result.message });
   }
   return res.status(result.code).json({
     message: result.message,
     data: result.data,
-    requireRelogin: result.requireRelogin,
   });
 };
 
 export const handleForgotPassword = async (req: Request, res: Response) => {
-  const payload = {
-    email: req.body.email,
-  };
-  const result = await authService.forgotPassword(payload);
+  const validated = forgotPasswordValidation.safeParse(req.body);
+  if (!validated.success) {
+    return res.status(400).json({
+      error: true,
+      message: validated.error.issues[0].message,
+      errors: validated.error.flatten(),
+    });
+  }
+
+  const result = await authService.forgotPassword(validated.data);
   if (result.error) {
     return res.status(result.code).json({ message: result.message });
   }
@@ -108,12 +108,16 @@ export const handleForgotPassword = async (req: Request, res: Response) => {
 };
 
 export const handleResetPassword = async (req: Request, res: Response) => {
-  const payload = {
-    token: req.body.token,
-    newPassword: req.body.newPassword,
-    confirmPassword: req.body.confirmPassword,
-  };
-  const result = await authService.resetPassword(payload);
+  const validated = resetPasswordValidation.safeParse(req.body);
+  if (!validated.success) {
+    return res.status(400).json({
+      error: true,
+      message: validated.error.issues[0].message,
+      errors: validated.error.flatten(),
+    });
+  }
+
+  const result = await authService.resetPassword(validated.data);
   if (result.error) {
     return res.status(result.code).json({ message: result.message });
   }
