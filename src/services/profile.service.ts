@@ -113,7 +113,7 @@ export const updateProfile = async (
         fullName: user.full_name,
         email: user.email,
         profilePicture: user.profile_picture,
-        requireRelogin: true,
+        requireRelogin: isEmailChanged,
       },
     );
   } catch (error: any) {
