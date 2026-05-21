@@ -4,7 +4,7 @@ import streamifier from "streamifier";
 import cloudinary from "../utils/cloudinary";
 import { IServiceResult } from "../interfaces/common.interface";
 import { renderVerifyMailHtml, sendMail } from "../utils/mail/reverifyMail";
-import { IUpdateProfilePayload } from "../types/profile";
+import { IUpdateProfilePayload } from "../interfaces/profile.interface";
 import { EMAIL_SMTP_USER, VERIFICATION_HOST } from "../utils/env";
 import { successResponse, errorResponse } from "../helpers/response.helper";
 import validationId from "../helpers/validationId.helper";
