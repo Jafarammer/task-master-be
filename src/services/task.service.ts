@@ -1,7 +1,16 @@
 import Task, { ITask } from "../models/task.model";
 import mongoose, { Types } from "mongoose";
+import { IServiceResult } from "../interfaces/common.interface";
+import { ITaskPayload } from "../interfaces/task.interface";
 import { ITaskServiceResult } from "../types/task";
 import { taskAdapter } from "../adapters/task.adapter";
+import validationId from "../helpers/validationId.helper";
+import {
+  comparePassword,
+  hashPassword,
+  normalizeEmail,
+} from "../helpers/auth.helper";
+import { successResponse, errorResponse } from "../helpers/response.helper";
 
 interface IGetTaskParams {
   user_id: Types.ObjectId | string | undefined;
@@ -23,47 +32,40 @@ interface ISearchTaskParams {
 }
 
 export const createTask = async (
-  user_id: string,
-  title: string,
-  description: string,
-  due_date: Date | string,
-  priority: string,
-): Promise<ITaskServiceResult> => {
+  id: string,
+  payload: ITaskPayload,
+): Promise<
+  IServiceResult<{
+    title: string;
+    description: string;
+    dueDate: Date | string;
+    priority: "low" | "medium" | "high";
+  }>
+> => {
   try {
-    if (!user_id || !title || !description || !due_date) {
-      return {
-        error: true,
-        code: 400,
-        message: "All fields are required",
-      };
+    const validatedId = validationId(id);
+    if (!validatedId.valid) {
+      return errorResponse(validatedId.message, 400);
     }
-    const allowed: string[] = ["low", "medium", "high"];
-    const prio: string = priority ?? "medium";
-    if (!allowed.includes(prio)) {
-      return {
-        error: true,
-        code: 400,
-        message: `priority must be one of ${allowed.join(",")}`,
-      };
-    }
-
-    const userObjectId =
-      typeof user_id === "string" ? new Types.ObjectId(user_id) : user_id;
-
-    const dueDateObj =
-      typeof due_date === "string" ? new Date(due_date) : due_date;
 
     const newTask = await Task.create({
-      user_id: userObjectId,
-      title,
-      description,
-      due_date: dueDateObj,
-      priority: prio,
+      user_id: validatedId.value,
+      title: payload.title,
+      description: payload.description,
+      due_date: payload.dueDate,
+      priority: payload.priority,
     });
 
-    return { data: newTask, message: "Create task success" };
+    await newTask.save();
+
+    return successResponse("Create task successfully", 201, {
+      title: payload.title,
+      description: payload.description,
+      dueDate: payload.dueDate,
+      priority: payload.priority,
+    });
   } catch (error: any) {
-    return { error: true, code: 500, message: "Internal server error" };
+    return errorResponse("Internal server error", 500);
   }
 };
 

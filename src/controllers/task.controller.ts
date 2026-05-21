@@ -1,26 +1,27 @@
 import { Request, Response } from "express";
 import * as taskService from "../services/task.service";
 import { AuthRequest } from "../middleware/authMiddleware";
+import { createTaskValidation } from "../validations/task.validate";
 
 export const handleCreateTask = async (req: AuthRequest, res: Response) => {
   const userId = req.user?.id;
+  const validated = createTaskValidation.safeParse(req.body);
+  if (!validated.success) {
+    return res.status(400).json({
+      error: true,
+      message: validated.error.issues[0].message,
+      errors: validated.error.flatten(),
+    });
+  }
 
-  const { title, description, due_date, priority } = req.body;
-
-  const result = await taskService.createTask(
-    userId,
-    title,
-    description,
-    due_date,
-    priority
-  );
+  const result = await taskService.createTask(userId, validated.data);
 
   if (result.error) {
     return res.status(result.code).json({ message: result.message });
   }
 
   return res.status(201).json({
-    message: "Create task success",
+    message: result.message,
     data: result.data,
   });
 };
@@ -36,7 +37,7 @@ export const handleUpdateTask = async (req: AuthRequest, res: Response) => {
     title,
     description,
     due_date,
-    priority
+    priority,
   );
 
   if (task.error) {
@@ -156,7 +157,7 @@ export const handleTaskUpdateStatus = async (req: Request, res: Response) => {
   const result = await taskService.updateTaskStatus(
     user_id,
     task_id,
-    is_completed
+    is_completed,
   );
 
   if (result.error) {
@@ -168,7 +169,7 @@ export const handleTaskUpdateStatus = async (req: Request, res: Response) => {
 
 export const handleGetTaskCompleted = async (
   req: AuthRequest,
-  res: Response
+  res: Response,
 ) => {
   const user_id: string = req.user?.id;
   const page: number = Number(req.query.page) || 1;
