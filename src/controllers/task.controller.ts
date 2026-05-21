@@ -1,7 +1,10 @@
 import { Request, Response } from "express";
 import * as taskService from "../services/task.service";
 import { AuthRequest } from "../middleware/authMiddleware";
-import { createTaskValidation } from "../validations/task.validate";
+import {
+  createTaskValidation,
+  updateTaskValidation,
+} from "../validations/task.validate";
 
 export const handleCreateTask = async (req: AuthRequest, res: Response) => {
   const userId = req.user?.id;
@@ -29,22 +32,24 @@ export const handleCreateTask = async (req: AuthRequest, res: Response) => {
 export const handleUpdateTask = async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
   const user_id = req.user?.id;
-  const { title, description, due_date, priority } = req.body;
-
-  const task = await taskService.updateTask(
-    id,
-    user_id,
-    title,
-    description,
-    due_date,
-    priority,
-  );
-
-  if (task.error) {
-    return res.status(task.code).json({ message: task.message });
+  const validated = updateTaskValidation.safeParse(req.body);
+  if (!validated.success) {
+    return res.status(400).json({
+      error: true,
+      message: validated.error.issues[0].message,
+      errors: validated.error.flatten(),
+    });
   }
 
-  return res.status(201).json({ data: task.data, message: task.message });
+  const result = await taskService.updateTask(id, user_id, validated.data);
+
+  if (result.error) {
+    return res.status(result.code).json({ message: result.message });
+  }
+
+  return res
+    .status(result.code)
+    .json({ data: result.data, message: result.message });
 };
 
 export const handleGetTask = async (req: AuthRequest, res: Response) => {

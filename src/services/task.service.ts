@@ -71,64 +71,66 @@ export const createTask = async (
 
 export const updateTask = async (
   id: string,
-  user_id: Types.ObjectId | string | undefined,
-  title?: string,
-  description?: string,
-  due_date?: Date | string,
-  priority?: string,
-): Promise<ITaskServiceResult> => {
+  user_id: string,
+  payload: ITaskPayload,
+): Promise<
+  IServiceResult<{
+    title: string;
+    description: string;
+    dueDate: Date | string;
+    priority: "low" | "medium" | "high";
+  }>
+> => {
   try {
-    if (!id || !mongoose.isValidObjectId(String(id))) {
-      return { error: true, code: 400, message: "Invalid or missing id" };
+    const validatedTaskId = validationId(id);
+
+    if (!validatedTaskId.valid) {
+      return errorResponse(validatedTaskId.message, 400);
     }
 
-    const updates: any = {};
+    const validatedUserId = validationId(user_id);
 
-    if (title !== undefined) updates.title = title;
-    if (description !== undefined) updates.description = description;
-    if (due_date !== undefined) {
-      const dueDateObj =
-        typeof due_date === "string" ? new Date(due_date) : due_date;
-      if (!dueDateObj || isNaN(dueDateObj.getTime())) {
-        return { error: true, code: 400, message: "Invalid due date format" };
-      }
-      updates.due_date = dueDateObj;
-    }
-    if (priority !== undefined) {
-      const allowed: string[] = ["low", "medium", "high"];
-      if (!allowed.includes(priority)) {
-        return {
-          error: true,
-          code: 400,
-          message: `priority must be one of ${allowed.join(", ")}`,
-        };
-      }
-      updates.priority = priority;
+    if (!validatedUserId.valid) {
+      return errorResponse(validatedUserId.message, 400);
     }
 
-    const query: any = { _id: id, deleted_at: null };
+    const task = await Task.findOne({
+      _id: validatedTaskId.value,
+      user_id: validatedUserId.value,
+      deleted_at: null,
+    });
 
-    if (user_id) {
-      if (typeof user_id === "string" && mongoose.isValidObjectId(user_id)) {
-        query.user_id = new Types.ObjectId(user_id);
-      } else if (user_id instanceof Types.ObjectId) {
-        query.user_id = user_id;
-      }
+    if (!task) {
+      return errorResponse("Task not found", 404);
     }
 
-    const updatedTask = await Task.findOneAndUpdate(
-      query,
-      { $set: updates },
-      { new: true },
-    ).exec();
-
-    if (!updatedTask) {
-      return { error: true, code: 404, message: "Task not found" };
+    if (payload.title !== undefined) {
+      task.title = payload.title;
     }
 
-    return { data: updatedTask, message: "Update task success" };
-  } catch (error) {
-    return { error: true, code: 500, message: "Internal server error" };
+    if (payload.description !== undefined) {
+      task.description = payload.description;
+    }
+
+    if (payload.dueDate !== undefined) {
+      task.due_date = new Date(payload.dueDate);
+    }
+
+    if (payload.priority !== undefined) {
+      task.priority = payload.priority;
+    }
+
+    await task.save();
+
+    return successResponse("Update task successfully", 201, {
+      title: task.title,
+      description: task.description,
+      dueDate: task.due_date.toISOString().split("T")[0],
+      priority: task.priority as "low" | "medium" | "high",
+    });
+  } catch (error: any) {
+    console.error("UPDATE TASK ERROR:", error);
+    return errorResponse("Internal server error", 500);
   }
 };
 
