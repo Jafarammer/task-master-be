@@ -4,7 +4,6 @@ import {
   handleCreateTask,
   handleUpdateTask,
   handleGetTask,
-  handleSearchTask,
   handleSoftDeleteTask,
   handleRestoreTask,
   handleHardDelete,
@@ -16,23 +15,18 @@ import {
 
 const router = Router();
 
-// ✅ LIST & SPECIAL ROUTES
-router.get("/", authToken, handleGetTask); // done integration from fe
-router.get("/search", authToken, handleSearchTask);
-router.get("/completed", authToken, handleGetTaskCompleted); // done integration from fe
+router.get("/", authToken, handleGetTask);
+router.get("/completed", authToken, handleGetTaskCompleted);
 router.get("/pending", authToken, handleGetTaskPending);
 
-// ✅ ACTION ROUTES
-router.delete("/soft/:task_id", authToken, handleSoftDeleteTask);
-router.delete("/hard/:task_id", authToken, handleHardDelete); // done integration from fe
+router.delete("/soft/:taskId", authToken, handleSoftDeleteTask);
+router.delete("/hard/:task_id", authToken, handleHardDelete);
 router.patch("/restore/:task_id", authToken, handleRestoreTask);
-router.patch("/status/:task_id", authToken, handleTaskUpdateStatus); // done integration from fe
+router.patch("/status/:task_id", authToken, handleTaskUpdateStatus);
 
-// ✅ CREATE
 router.post("/", authToken, handleCreateTask);
 
-// ✅ DETAIL & UPDATE (DINAMIS DI PALING BAWAH)
-router.get("/detail/:id", authToken, handleGetDetail); // done integration from fe
-router.patch("/:id", authToken, handleUpdateTask); // done integration from fe
+router.get("/detail/:id", authToken, handleGetDetail);
+router.patch("/:id", authToken, handleUpdateTask);
 
 export default router;

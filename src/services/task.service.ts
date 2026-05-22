@@ -1,7 +1,7 @@
 import Task, { ITask } from "../models/task.model";
 import mongoose, { Types } from "mongoose";
 import { IServiceResult, IServiceParams } from "../interfaces/common.interface";
-import { ITaskPayload } from "../interfaces/task.interface";
+import { ITaskPayload, ISoftDeleteTask } from "../interfaces/task.interface";
 import { ITaskServiceResult } from "../types/task";
 import { taskAdapter } from "../adapters/task.adapter";
 import validationId from "../helpers/validationId.helper";
@@ -221,67 +221,24 @@ export const getTask = async (
   }
 };
 
-export const searchTask = async ({
-  user_id,
-  query,
-  page = 1,
-  limit = 5,
-  sort_by = "createdAt",
-  order = "desc",
-}: ISearchTaskParams): Promise<ITaskServiceResult> => {
-  try {
-    if (!user_id) {
-      return { error: true, code: 404, message: "Unauthorized user." };
-    }
-
-    const skip: number = (page - 1) * limit;
-    const sortOption: any = {};
-    sortOption[sort_by] = order === "asc" ? 1 : -1;
-
-    const searchFilter: Record<string, unknown> = {
-      user_id,
-      deleted_at: null,
-      $or: [
-        { title: { $regex: query, $options: "i" } },
-        { description: { $regex: query, $options: "i" } },
-      ],
-    };
-
-    const [tasks, total] = await Promise.all([
-      Task.find(searchFilter).sort(sortOption).skip(skip).limit(limit),
-      Task.countDocuments(searchFilter),
-    ]);
-
-    return {
-      data: tasks,
-      pagination: {
-        page,
-        limit,
-        total,
-        total_pages: Math.ceil(total / limit),
-      },
-    } as unknown as ITaskServiceResult;
-  } catch (error) {
-    return { error: true, code: 500, message: "Internal server error" };
-  }
-};
-
 export const softDeleteTask = async (
-  user_id: string,
-  task_id: string,
+  payload: ISoftDeleteTask,
 ): Promise<ITaskServiceResult> => {
   try {
-    if (!user_id || !task_id) {
-      return {
-        error: true,
-        code: 400,
-        message: "user_id and task_id are required.",
-      };
+    console.log("TESSSS", payload);
+    const validationUserId = validationId(payload.userId);
+    if (!validationUserId.valid) {
+      return errorResponse(validationUserId.message, 400);
+    }
+
+    const validationTaskId = validationId(payload.taskId);
+    if (!validationTaskId.valid) {
+      return errorResponse(validationTaskId.message, 400);
     }
 
     const task = await Task.findOne({
-      _id: task_id,
-      user_id,
+      _id: validationTaskId.value,
+      user_id: validationUserId.value,
       deleted_at: null,
     } satisfies {
       _id: string;
@@ -290,34 +247,16 @@ export const softDeleteTask = async (
     });
 
     if (!task) {
-      return {
-        error: true,
-        code: 404,
-        message: "Task not found or already deleted.",
-      };
+      return errorResponse("Task not found or already deleted.", 400);
     }
 
     // soft deleted
     task.deleted_at = new Date();
     await task.save();
 
-    // get remaining task
-    const remainingTasks = await Task.find({
-      user_id,
-      deleted_at: null,
-    } satisfies {
-      user_id: string;
-      deleted_at: null;
-    })
-      .sort({ createdAt: -1 })
-      .exec();
-
-    return {
-      data: remainingTasks,
-      message: "Task deleted successfully.",
-    };
-  } catch (error) {
-    return { error: true, code: 500, message: "Internal server error" };
+    return successResponse("Task moved to trash successfully", 201);
+  } catch (error: any) {
+    return errorResponse("Internal server error", 500);
   }
 };
 

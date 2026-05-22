@@ -4,3 +4,8 @@ export interface ITaskPayload {
   dueDate: Date | string;
   priority: "low" | "medium" | "high";
 }
+
+export interface ISoftDeleteTask {
+  userId: string;
+  taskId: string;
+}
