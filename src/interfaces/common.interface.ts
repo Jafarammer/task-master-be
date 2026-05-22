@@ -4,3 +4,11 @@ export interface IServiceResult<T = unknown> {
   message: string;
   data?: T;
 }
+
+export interface IServiceParams {
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  order?: "asc" | "desc";
+  query?: string;
+}

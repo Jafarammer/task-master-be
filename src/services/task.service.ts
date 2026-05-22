@@ -1,6 +1,6 @@
 import Task, { ITask } from "../models/task.model";
 import mongoose, { Types } from "mongoose";
-import { IServiceResult } from "../interfaces/common.interface";
+import { IServiceResult, IServiceParams } from "../interfaces/common.interface";
 import { ITaskPayload } from "../interfaces/task.interface";
 import { ITaskServiceResult } from "../types/task";
 import { taskAdapter } from "../adapters/task.adapter";
@@ -11,6 +11,7 @@ import {
   normalizeEmail,
 } from "../helpers/auth.helper";
 import { successResponse, errorResponse } from "../helpers/response.helper";
+import getPagination from "../helpers/pagination.helper";
 
 interface IGetTaskParams {
   user_id: Types.ObjectId | string | undefined;
@@ -134,46 +135,89 @@ export const updateTask = async (
   }
 };
 
-export const getTask = async ({
-  user_id,
-  page = 1,
-  limit = 5,
-  sort_by = "createdAt",
-  order = "desc",
-  query,
-}: IGetTaskParams): Promise<ITaskServiceResult> => {
+export const getTask = async (
+  user_id: string,
+  params: IServiceParams,
+): Promise<
+  IServiceResult<{
+    tasks: {
+      id: string;
+      title: string;
+      description: string;
+      dueDate: string;
+      priority: "low" | "medium" | "high";
+      createdAt: Date;
+      updatedAt: Date;
+    }[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+  }>
+> => {
   try {
-    if (!user_id) {
-      return { error: true, code: 404, message: "Unauthorized user." };
-    }
-    const skip: number = (page - 1) * limit;
-    const sortOption: any = {};
-    sortOption[sort_by] = order === "asc" ? 1 : -1;
+    const validatedUserId = validationId(user_id);
 
-    const searchFilter: Record<string, unknown> = {
-      user_id,
+    if (!validatedUserId.valid) {
+      return errorResponse(validatedUserId.message, 400);
+    }
+
+    const pagination = getPagination(params);
+
+    const filters: Record<string, unknown> = {
+      user_id: validatedUserId.value,
       deleted_at: null,
-      $or: [
-        { title: { $regex: query, $options: "i" } },
-        { description: { $regex: query, $options: "i" } },
-      ],
     };
 
+    if (params.query) {
+      filters.$or = [
+        {
+          title: {
+            $regex: params.query,
+            $options: "i",
+          },
+        },
+        {
+          description: {
+            $regex: params.query,
+            $options: "i",
+          },
+        },
+      ];
+    }
+
     const [tasks, total] = await Promise.all([
-      Task.find(searchFilter).sort(sortOption).skip(skip).limit(limit),
-      Task.countDocuments(searchFilter),
+      Task.find(filters)
+        .sort(pagination.sort)
+        .skip(pagination.skip)
+        .limit(pagination.limit),
+
+      Task.countDocuments(filters),
     ]);
-    return {
-      data: taskAdapter(tasks),
+
+    return successResponse("Get task successfully", 200, {
+      tasks: tasks.map((task) => ({
+        id: task.id,
+        title: task.title,
+        description: task.description,
+        dueDate: task.due_date.toISOString().split("T")[0],
+        priority: task.priority as "low" | "medium" | "high",
+        createdAt: task.createdAt,
+        updatedAt: task.updatedAt,
+      })),
       pagination: {
-        page,
-        limit,
+        page: pagination.page,
+        limit: pagination.limit,
         total,
-        total_pages: Math.ceil(total / limit),
+        totalPages: Math.ceil(total / pagination.limit),
       },
-    } as unknown as ITaskServiceResult;
-  } catch (error) {
-    return { error: true, code: 500, message: "Internal server error" };
+    });
+  } catch (error: any) {
+    console.error("GET TASK ERROR:", error);
+
+    return errorResponse("Internal server error", 500);
   }
 };
 
