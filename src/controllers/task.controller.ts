@@ -5,6 +5,7 @@ import {
   createTaskValidation,
   updateTaskValidation,
 } from "../validations/task.validate";
+import { IServiceParams } from "../interfaces/common.interface";
 
 export const handleCreateTask = async (req: AuthRequest, res: Response) => {
   const userId = req.user?.id;
@@ -54,28 +55,23 @@ export const handleUpdateTask = async (req: AuthRequest, res: Response) => {
 
 export const handleGetTask = async (req: AuthRequest, res: Response) => {
   const user_id: string = req.user?.id;
-  const page: number = Number(req.query.page) || 1;
-  const limit: number = Number(req.query.limit) || 5;
-  const sort_by: string = String(req.query.sort_by || "createdAt");
-  const order = req.query.order === "asc" ? "asc" : "desc";
-  const query: string = String(req.query.search) || "";
+  const params: IServiceParams = {
+    page: Number(req.query.page) || 1,
+    limit: Number(req.query.limit) || 5,
+    sortBy: (req.query.sortBy as string) || "createdAt",
+    order: (req.query.order as "asc" | "desc") || "desc",
+    query: (req.query.query as string) || "",
+  };
 
-  const result = await taskService.getTask({
-    user_id,
-    page,
-    limit,
-    sort_by,
-    order,
-    query,
-  });
+  const result = await taskService.getTask(user_id, params);
 
   if (result.error) {
     return res.status(result.code).json({ message: result.message });
   }
 
   return res
-    .status(201)
-    .json({ data: result.data, meta_data: result.pagination });
+    .status(result.code)
+    .json({ data: result.data.tasks, meta_data: result.data.pagination });
 };
 
 export const handleSearchTask = async (req: AuthRequest, res: Response) => {
