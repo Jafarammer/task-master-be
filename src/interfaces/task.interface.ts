@@ -9,3 +9,7 @@ export interface IDeleteTaskPayload {
   userId: string;
   taskId: string;
 }
+
+export interface IUpdateStatusTaskPayload {
+  isCompleted: boolean;
+}

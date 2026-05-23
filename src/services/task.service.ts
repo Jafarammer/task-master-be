@@ -1,7 +1,11 @@
 import Task, { ITask } from "../models/task.model";
 import mongoose, { Types } from "mongoose";
 import { IServiceResult, IServiceParams } from "../interfaces/common.interface";
-import { ITaskPayload, IDeleteTaskPayload } from "../interfaces/task.interface";
+import {
+  ITaskPayload,
+  IDeleteTaskPayload,
+  IUpdateStatusTaskPayload,
+} from "../interfaces/task.interface";
 import { ITaskServiceResult } from "../types/task";
 import { taskAdapter } from "../adapters/task.adapter";
 import validationId from "../helpers/validationId.helper";
@@ -147,6 +151,7 @@ export const getTask = async (
       description: string;
       dueDate: string;
       priority: "low" | "medium" | "high";
+      isCompleted: boolean;
       createdAt: Date;
       updatedAt: Date;
     }[];
@@ -205,6 +210,7 @@ export const getTask = async (
         description: task.description,
         dueDate: task.due_date.toISOString().split("T")[0],
         priority: task.priority as "low" | "medium" | "high",
+        isCompleted: task.is_completed,
         createdAt: task.createdAt,
         updatedAt: task.updatedAt,
       })),
@@ -329,55 +335,43 @@ export const restoreTask = async (
 };
 
 export const updateTaskStatus = async (
-  user_id: string,
-  task_id: string,
-  is_completed: boolean,
-): Promise<ITaskServiceResult> => {
+  userId: string,
+  taskId: string,
+  payload: IUpdateStatusTaskPayload,
+): Promise<IServiceResult> => {
   try {
-    if (!user_id || !task_id) {
-      return {
-        error: true,
-        code: 400,
-        message: "user_id and task_id are required.",
-      };
+    const validatedUserId = validationId(userId);
+    if (!validatedUserId.valid) {
+      return errorResponse(validatedUserId.message, 400);
     }
 
-    if (
-      !mongoose.isValidObjectId(user_id) ||
-      !mongoose.isValidObjectId(task_id)
-    ) {
-      return { error: true, code: 400, message: "Invalid id format." };
-    }
-
-    if (typeof is_completed !== "boolean") {
-      return {
-        error: true,
-        code: 400,
-        message: "is_completed must be a boolean (true/false).",
-      };
+    const validatedTaskId = validationId(taskId);
+    if (!validatedTaskId.valid) {
+      return errorResponse(validatedTaskId.message, 400);
     }
 
     const query = {
-      _id: new Types.ObjectId(task_id),
-      user_id: new Types.ObjectId(user_id),
+      _id: validatedTaskId.value,
+      user_id: validatedUserId.value,
       deleted_at: null,
     };
 
     const updated = await Task.findOneAndUpdate(
       query,
       {
-        is_completed,
+        is_completed: payload.isCompleted,
       },
       { new: true },
     );
 
     if (!updated) {
-      return { error: true, code: 404, message: "Task not found." };
+      return errorResponse("Task not found", 404);
     }
 
-    return { data: updated, message: "Task status updated successfully." };
-  } catch (error) {
-    return { error: true, code: 500, message: "Internal server error" };
+    return successResponse("Task status updated successfully", 201);
+  } catch (error: any) {
+    console.error("UPDATE STATUS TASK ERROR", error);
+    return errorResponse("Internal server error", 500);
   }
 };
 

@@ -4,6 +4,7 @@ import { AuthRequest } from "../middleware/authMiddleware";
 import {
   createTaskValidation,
   updateTaskValidation,
+  updateStatusTaskValidation,
 } from "../validations/task.validate";
 import { IServiceParams } from "../interfaces/common.interface";
 
@@ -99,7 +100,7 @@ export const handleHardDeleteTask = async (req: AuthRequest, res: Response) => {
     return res.status(result.code).json({ message: result.message });
   }
 
-  return res.status(200).json({ message: result.message });
+  return res.status(result.code).json({ message: result.message });
 };
 
 export const handleRestoreTask = async (req: AuthRequest, res: Response) => {
@@ -112,25 +113,35 @@ export const handleRestoreTask = async (req: AuthRequest, res: Response) => {
     return res.status(result.code).json({ message: result.message });
   }
 
-  return res.status(200).json({ data: result.data, message: result.message });
+  return res.status(result.code).json({ message: result.message });
 };
 
-export const handleTaskUpdateStatus = async (req: Request, res: Response) => {
-  const user_id: string = (req as any).user?.id;
-  const { task_id } = req.params;
-  const { is_completed } = req.body;
+export const handleTaskUpdateStatus = async (
+  req: AuthRequest,
+  res: Response,
+) => {
+  const userId = req.user.id;
+  const { taskId } = req.params;
+  const validated = updateStatusTaskValidation.safeParse(req.body);
+  if (!validated.success) {
+    return res.status(400).json({
+      error: true,
+      message: validated.error.issues[0].message,
+      errors: validated.error.flatten(),
+    });
+  }
 
   const result = await taskService.updateTaskStatus(
-    user_id,
-    task_id,
-    is_completed,
+    userId,
+    taskId,
+    validated.data,
   );
 
   if (result.error) {
     return res.status(result.code).json({ message: result.message });
   }
 
-  return res.status(201).json({ data: result.data, message: result.message });
+  return res.status(result.code).json({ message: result.message });
 };
 
 export const handleGetTaskCompleted = async (

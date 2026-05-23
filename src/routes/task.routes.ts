@@ -22,7 +22,7 @@ router.get("/pending", authToken, handleGetTaskPending);
 router.delete("/soft/:taskId", authToken, handleSoftDeleteTask);
 router.delete("/hard/:taskId", authToken, handleHardDeleteTask);
 router.patch("/restore/:taskId", authToken, handleRestoreTask);
-router.patch("/status/:task_id", authToken, handleTaskUpdateStatus);
+router.patch("/status/:taskId", authToken, handleTaskUpdateStatus);
 
 router.post("/", authToken, handleCreateTask);
 

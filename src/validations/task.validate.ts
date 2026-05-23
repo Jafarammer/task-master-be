@@ -21,3 +21,7 @@ export const updateTaskValidation = z.object({
     error: "priority must be one of, low, medium, high ",
   }),
 });
+
+export const updateStatusTaskValidation = z.object({
+  isCompleted: z.boolean({ error: "Status must be true or false" }),
+});
