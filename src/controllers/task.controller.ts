@@ -189,16 +189,15 @@ export const handleGetTaskPending = async (req: AuthRequest, res: Response) => {
     .json({ data: result.data.tasks, meta_data: result.data.pagination });
 };
 
-export const handleGetDetail = async (req: AuthRequest, res: Response) => {
+export const handleGetDetailTask = async (req: AuthRequest, res: Response) => {
   const userId = req.user?.id;
   const taskId = req.params.id;
-  const result = await taskService.taskDetail({
-    user_id: userId,
-    task_id: taskId,
-  });
+  const result = await taskService.taskDetail(userId, taskId);
   if (result.error) {
     return res.status(result.code).json({ message: result.message });
   }
 
-  return res.status(200).json({ data: result.data });
+  return res
+    .status(result.code)
+    .json({ data: result.data, message: result.message });
 };

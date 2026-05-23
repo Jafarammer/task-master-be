@@ -547,39 +547,56 @@ export const getTaskPending = async (
   }
 };
 
-export const taskDetail = async ({
-  user_id,
-  task_id,
-}: IGetTaskParams): Promise<ITaskServiceResult> => {
+export const taskDetail = async (
+  userId: string,
+  taskId: string,
+): Promise<
+  IServiceResult<{
+    id: string;
+    title: string;
+    description: string;
+    dueDate: string;
+    priority: "low" | "medium" | "high";
+    isCompleted: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+  }>
+> => {
   try {
-    if (!user_id) {
-      return { error: true, code: 400, message: "User id is required!" };
-    }
-    if (!task_id) {
-      return { error: true, code: 400, message: "Task id is required!" };
+    const validatedUserId = validationId(userId);
+    if (!validatedUserId.valid) {
+      return errorResponse(validatedUserId.message, 400);
     }
 
-    if (!mongoose.isValidObjectId(user_id))
-      return { error: true, code: 400, message: "Invalid user id format" };
-
-    if (!mongoose.isValidObjectId(task_id))
-      return { error: true, code: 400, message: "Invalid task id format" };
+    const validatedTaskId = validationId(taskId);
+    if (!validatedTaskId.valid) {
+      return errorResponse(validatedTaskId.message, 400);
+    }
 
     const taskFindId = await Task.findOne({
-      _id: task_id,
-      user_id: user_id,
+      _id: validatedTaskId.value,
+      user_id: validatedUserId.value,
       deleted_at: null,
     })
       .select("-user_id -deleted_at -createdAt -updatedAt")
       .exec();
 
     if (!taskFindId) {
-      return { error: true, code: 404, message: "Task not found!" };
+      return errorResponse("Task not found", 404);
     }
 
-    return { data: taskFindId };
-  } catch (error) {
+    return successResponse("Get task detail successfully", 200, {
+      id: taskFindId.id,
+      title: taskFindId.title,
+      description: taskFindId.description,
+      dueDate: taskFindId.due_date.toISOString().split("T")[0],
+      priority: taskFindId.priority as "low" | "medium" | "high",
+      isCompleted: taskFindId.is_completed,
+      createdAt: taskFindId.createdAt,
+      updatedAt: taskFindId.updatedAt,
+    });
+  } catch (error: any) {
     console.error("TASK DETAIL ERROR:", error);
-    return { error: true, code: 500, message: "Internal server error" };
+    return errorResponse("Internal server error", 500);
   }
 };

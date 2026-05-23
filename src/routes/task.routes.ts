@@ -10,7 +10,7 @@ import {
   handleTaskUpdateStatus,
   handleGetTaskCompleted,
   handleGetTaskPending,
-  handleGetDetail,
+  handleGetDetailTask,
 } from "../controllers/task.controller";
 
 const router = Router();
@@ -26,7 +26,7 @@ router.patch("/status/:taskId", authToken, handleTaskUpdateStatus);
 
 router.post("/", authToken, handleCreateTask);
 
-router.get("/detail/:id", authToken, handleGetDetail);
+router.get("/detail/:id", authToken, handleGetDetailTask);
 router.patch("/:id", authToken, handleUpdateTask);
 
 export default router;
