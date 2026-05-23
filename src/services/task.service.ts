@@ -461,53 +461,89 @@ export const getTaskCompleted = async (
   }
 };
 
-export const getTaskPending = async ({
-  user_id,
-  page = 1,
-  limit = 5,
-  sort_by = "createdAt",
-  order = "desc",
-  query = "",
-}: IGetTaskParams): Promise<ITaskServiceResult> => {
+export const getTaskPending = async (
+  userId: string,
+  params: IServiceParams,
+): Promise<
+  IServiceResult<{
+    tasks: {
+      id: string;
+      title: string;
+      description: string;
+      dueDate: string;
+      priority: "low" | "medium" | "high";
+      isCompleted: boolean;
+      createdAt: Date;
+      updatedAt: Date;
+    }[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+  }>
+> => {
   try {
-    if (!user_id) {
-      return { error: true, code: 400, message: '"user_id is required."' };
+    const validatedId = validationId(userId);
+    if (!validatedId.valid) {
+      return errorResponse(validatedId.message, 400);
     }
 
-    if (!mongoose.isValidObjectId(user_id)) {
-      return { error: true, code: 400, message: "Invalid format id" };
-    }
+    const pagination = getPagination(params);
 
-    const skip: number = (page - 1) * limit;
-    const sortOption: any = {};
-    sortOption[sort_by] = order === "asc" ? 1 : -1;
-
-    const searchFilter: Record<string, unknown> = {
-      user_id,
+    const filters: Record<string, unknown> = {
+      user_id: validatedId.value,
       deleted_at: null,
       is_completed: false,
-      $or: [
-        { title: { $regex: query, $options: "i" } },
-        { description: { $regex: query, $options: "i" } },
-      ],
     };
 
+    if (params.query) {
+      filters.$or = [
+        {
+          title: {
+            $regex: params.query,
+            $options: "i",
+          },
+        },
+        {
+          description: {
+            $regex: params.query,
+            $options: "i",
+          },
+        },
+      ];
+    }
+
     const [tasks, total] = await Promise.all([
-      Task.find(searchFilter).sort(sortOption).skip(skip).limit(limit),
-      Task.countDocuments(searchFilter),
+      Task.find(filters)
+        .sort(pagination.sort)
+        .skip(pagination.skip)
+        .limit(pagination.limit),
+      Task.countDocuments(filters),
     ]);
 
-    return {
-      data: taskAdapter(tasks),
+    return successResponse("Get task pending successfully", 200, {
+      tasks: tasks.map((task) => ({
+        id: task.id,
+        title: task.title,
+        description: task.description,
+        dueDate: task.due_date.toISOString().split("T")[0],
+        priority: task.priority as "low" | "medium" | "high",
+        isCompleted: task.is_completed,
+        createdAt: task.createdAt,
+        updatedAt: task.updatedAt,
+      })),
       pagination: {
-        page,
-        limit,
+        page: pagination.page,
+        limit: pagination.limit,
         total,
-        total_pages: Math.ceil(total / limit),
+        totalPages: Math.ceil(total / pagination.limit),
       },
-    } as unknown as ITaskServiceResult;
-  } catch (error) {
-    return { error: true, code: 500, message: "Internal server error" };
+    });
+  } catch (error: any) {
+    console.error("GET TASK PENDING ERROR", error);
+    return errorResponse("Internal server error", 500);
   }
 };
 
