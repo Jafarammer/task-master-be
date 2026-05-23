@@ -102,11 +102,11 @@ export const handleRestoreTask = async (req: Request, res: Response) => {
   return res.status(200).json({ data: result.data, message: result.message });
 };
 
-export const handleHardDelete = async (req: Request, res: Response) => {
-  const user_id: string = (req as any).user?.id;
-  const { task_id } = req.params;
+export const handleHardDelete = async (req: AuthRequest, res: Response) => {
+  const userId = req.user?.id;
+  const { taskId } = req.params;
 
-  const result = await taskService.hardDeleteTask(user_id, task_id);
+  const result = await taskService.hardDeleteTask({ userId, taskId });
 
   if (result.error) {
     return res.status(result.code).json({ message: result.message });

@@ -5,7 +5,7 @@ export interface ITaskPayload {
   priority: "low" | "medium" | "high";
 }
 
-export interface ISoftDeleteTask {
+export interface IDeleteTaskPayload {
   userId: string;
   taskId: string;
 }

@@ -1,7 +1,7 @@
 import Task, { ITask } from "../models/task.model";
 import mongoose, { Types } from "mongoose";
 import { IServiceResult, IServiceParams } from "../interfaces/common.interface";
-import { ITaskPayload, ISoftDeleteTask } from "../interfaces/task.interface";
+import { ITaskPayload, IDeleteTaskPayload } from "../interfaces/task.interface";
 import { ITaskServiceResult } from "../types/task";
 import { taskAdapter } from "../adapters/task.adapter";
 import validationId from "../helpers/validationId.helper";
@@ -66,6 +66,7 @@ export const createTask = async (
       priority: payload.priority,
     });
   } catch (error: any) {
+    console.error("CREATE TASK ERROR", error);
     return errorResponse("Internal server error", 500);
   }
 };
@@ -216,16 +217,14 @@ export const getTask = async (
     });
   } catch (error: any) {
     console.error("GET TASK ERROR:", error);
-
     return errorResponse("Internal server error", 500);
   }
 };
 
 export const softDeleteTask = async (
-  payload: ISoftDeleteTask,
+  payload: IDeleteTaskPayload,
 ): Promise<ITaskServiceResult> => {
   try {
-    console.log("TESSSS", payload);
     const validationUserId = validationId(payload.userId);
     if (!validationUserId.valid) {
       return errorResponse(validationUserId.message, 400);
@@ -247,7 +246,7 @@ export const softDeleteTask = async (
     });
 
     if (!task) {
-      return errorResponse("Task not found or already deleted.", 400);
+      return errorResponse("Task not found or already deleted", 400);
     }
 
     // soft deleted
@@ -256,6 +255,39 @@ export const softDeleteTask = async (
 
     return successResponse("Task moved to trash successfully", 201);
   } catch (error: any) {
+    console.error("SOFT DELETE TASK ERROR", error);
+    return errorResponse("Internal server error", 500);
+  }
+};
+
+export const hardDeleteTask = async (
+  payload: IDeleteTaskPayload,
+): Promise<ITaskServiceResult> => {
+  try {
+    const validatedUserId = validationId(payload.userId);
+    if (!validatedUserId.valid) {
+      return errorResponse(validatedUserId.message, 400);
+    }
+
+    const validatedTaskId = validationId(payload.taskId);
+    if (!validatedTaskId.valid) {
+      return errorResponse(validatedTaskId.message, 400);
+    }
+
+    const query = {
+      _id: validatedTaskId.value,
+      user_id: validatedUserId.value,
+    };
+
+    const deleted = await Task.findOneAndDelete(query).exec();
+
+    if (!deleted) {
+      return errorResponse("Task not found or already deleted", 404);
+    }
+
+    return successResponse("Task deleted successfully", 201);
+  } catch (error: any) {
+    console.error("HARD DELETE TASK ERROR", error);
     return errorResponse("Internal server error", 500);
   }
 };
@@ -300,47 +332,6 @@ export const restoreTask = async (
     await task.save();
 
     return { data: task, message: "Task restored successfully." };
-  } catch (error) {
-    return { error: true, code: 500, message: "Internal server error" };
-  }
-};
-
-export const hardDeleteTask = async (
-  user_id: string,
-  task_id: string,
-): Promise<ITaskServiceResult> => {
-  try {
-    if (!user_id || !task_id) {
-      return {
-        error: true,
-        code: 400,
-        message: "user_id and task_id are required.",
-      };
-    }
-
-    if (
-      !mongoose.isValidObjectId(user_id) ||
-      !mongoose.isValidObjectId(task_id)
-    ) {
-      return { error: true, code: 400, message: "Invalid id format" };
-    }
-
-    const query = {
-      _id: new Types.ObjectId(task_id),
-      user_id: new Types.ObjectId(user_id),
-    };
-
-    const deleted = await Task.findOneAndDelete(query).exec();
-
-    if (!deleted) {
-      return {
-        error: true,
-        code: 404,
-        message: "Task not found or already deleted.",
-      };
-    }
-
-    return { message: "Task permanently deleted successfully." };
   } catch (error) {
     return { error: true, code: 500, message: "Internal server error" };
   }
