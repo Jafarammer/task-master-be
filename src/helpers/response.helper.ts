@@ -1,10 +1,10 @@
-import { IServiceResult } from "../interfaces/common.interface";
+import { IServiceResponse } from "../interfaces/common.interface";
 
 export const successResponse = <T = unknown>(
   message: string,
   code = 200,
   data?: T,
-): IServiceResult<T> => {
+): IServiceResponse<T> => {
   return {
     error: false,
     code,
@@ -17,7 +17,7 @@ export const errorResponse = <T = unknown>(
   message: string,
   code = 400,
   data?: T,
-): IServiceResult<T> => {
+): IServiceResponse<T> => {
   return {
     error: true,
     code,

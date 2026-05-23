@@ -7,7 +7,7 @@ import {
   IForgotPasswordPayload,
   IResetPasswordPayload,
 } from "../interfaces/auth.interface";
-import { IServiceResult } from "../interfaces/common.interface";
+import { IServiceResponse } from "../interfaces/common.interface";
 import { createAccessToken } from "../utils/tokens";
 import { sendMail, renderMailHtml } from "../utils/mail/mail";
 import {
@@ -25,7 +25,7 @@ import { successResponse, errorResponse } from "../helpers/response.helper";
 
 export const loginUser = async (
   payload: ILoginPayload,
-): Promise<IServiceResult<{ token: string }>> => {
+): Promise<IServiceResponse<{ token: string }>> => {
   try {
     const email = normalizeEmail(payload.email);
 
@@ -63,7 +63,7 @@ export const loginUser = async (
 
 export const registerUser = async (
   payload: IRegisterPayload,
-): Promise<IServiceResult> => {
+): Promise<IServiceResponse> => {
   try {
     const email = normalizeEmail(payload.email);
     const existing = await User.findOne({ email: email });
@@ -113,7 +113,7 @@ export const registerUser = async (
 
 export const activateUser = async (
   code: string,
-): Promise<IServiceResult<{ redirectUrl: string }>> => {
+): Promise<IServiceResponse<{ redirectUrl: string }>> => {
   const user = await User.findOne({ activationCode: code });
 
   if (!user) {
@@ -133,7 +133,7 @@ export const activateUser = async (
 
 export const reActivateUser = async (
   code: string,
-): Promise<IServiceResult<{ redirectUrl: string }>> => {
+): Promise<IServiceResponse<{ redirectUrl: string }>> => {
   const user = await User.findOne({ activationCode: code });
 
   if (!user) {
@@ -155,7 +155,7 @@ export const reActivateUser = async (
 export const changePassword = async (
   id: string,
   payload: IChangePasswordPayload,
-): Promise<IServiceResult<{ requireRelogin: boolean }>> => {
+): Promise<IServiceResponse<{ requireRelogin: boolean }>> => {
   try {
     const validatedId = validationId(id);
     if (!validatedId.valid) {
@@ -202,7 +202,7 @@ export const changePassword = async (
 
 export const forgotPassword = async (
   payload: IForgotPasswordPayload,
-): Promise<IServiceResult> => {
+): Promise<IServiceResponse> => {
   try {
     const email = normalizeEmail(payload.email);
 
@@ -238,7 +238,7 @@ export const forgotPassword = async (
 
 export const resetPassword = async (
   payload: IResetPasswordPayload,
-): Promise<IServiceResult> => {
+): Promise<IServiceResponse> => {
   try {
     const newPassword = payload.newPassword.trim();
 

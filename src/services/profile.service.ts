@@ -2,18 +2,19 @@ import User from "../models/user.model";
 import crypto from "crypto";
 import streamifier from "streamifier";
 import cloudinary from "../utils/cloudinary";
-import { IServiceResult } from "../interfaces/common.interface";
+import { IServiceResponse } from "../interfaces/common.interface";
 import { renderVerifyMailHtml, sendMail } from "../utils/mail/reverifyMail";
-import { IUpdateProfilePayload } from "../interfaces/profile.interface";
+import {
+  IUpdateProfilePayload,
+  IResultDataProfile,
+} from "../interfaces/profile.interface";
 import { EMAIL_SMTP_USER, VERIFICATION_HOST } from "../utils/env";
 import { successResponse, errorResponse } from "../helpers/response.helper";
 import validationId from "../helpers/validationId.helper";
 
 export const getProfile = async (
   id: string,
-): Promise<
-  IServiceResult<{ fullName: string; email: string; profilePicture: string }>
-> => {
+): Promise<IServiceResponse<IResultDataProfile>> => {
   try {
     const validatedId = validationId(id);
     if (!validatedId.valid) {
@@ -43,14 +44,7 @@ export const getProfile = async (
 export const updateProfile = async (
   id: string,
   payload: IUpdateProfilePayload,
-): Promise<
-  IServiceResult<{
-    fullName: string;
-    email: string;
-    profilePicture: string;
-    requireRelogin: boolean;
-  }>
-> => {
+): Promise<IServiceResponse<IResultDataProfile>> => {
   try {
     const validatedId = validationId(id);
     if (!validatedId.valid) {
@@ -125,9 +119,7 @@ export const updateProfile = async (
 export const updateProfilePicture = async (
   id: string,
   file?: Express.Multer.File,
-): Promise<
-  IServiceResult<{ fullName: string; email: string; profilePicture: string }>
-> => {
+): Promise<IServiceResponse<IResultDataProfile>> => {
   try {
     const validatedId = validationId(id);
     if (!validatedId.valid) {

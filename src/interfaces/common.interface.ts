@@ -1,4 +1,4 @@
-export interface IServiceResult<T = unknown> {
+export interface IServiceResponse<T = unknown> {
   error: boolean;
   code: number;
   message: string;

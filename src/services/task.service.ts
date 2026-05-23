@@ -1,5 +1,8 @@
 import Task from "../models/task.model";
-import { IServiceResult, IServiceParams } from "../interfaces/common.interface";
+import {
+  IServiceParams,
+  IServiceResponse,
+} from "../interfaces/common.interface";
 import {
   ITaskPayload,
   IUpdateStatusTaskPayload,
@@ -13,7 +16,7 @@ import getPagination from "../helpers/pagination.helper";
 export const createTask = async (
   id: string,
   payload: ITaskPayload,
-): Promise<IServiceResult<IResultDataTask>> => {
+): Promise<IServiceResponse<IResultDataTask>> => {
   try {
     const validatedId = validationId(id);
     if (!validatedId.valid) {
@@ -48,7 +51,7 @@ export const updateTask = async (
   id: string,
   user_id: string,
   payload: ITaskPayload,
-): Promise<IServiceResult<IResultDataTask>> => {
+): Promise<IServiceResponse<IResultDataTask>> => {
   try {
     const validatedTaskId = validationId(id);
 
@@ -108,7 +111,7 @@ export const getTask = async (
   user_id: string,
   params: IServiceParams,
 ): Promise<
-  IServiceResult<{
+  IServiceResponse<{
     tasks: IResultDataTask[];
     pagination: IResultMetaDataTask;
   }>
@@ -178,7 +181,7 @@ export const getTask = async (
 export const softDeleteTask = async (
   userId: string,
   taskId: string,
-): Promise<IServiceResult> => {
+): Promise<IServiceResponse> => {
   try {
     const validationUserId = validationId(userId);
     if (!validationUserId.valid) {
@@ -218,7 +221,7 @@ export const softDeleteTask = async (
 export const hardDeleteTask = async (
   userId: string,
   taskId: string,
-): Promise<IServiceResult> => {
+): Promise<IServiceResponse> => {
   try {
     const validatedUserId = validationId(userId);
     if (!validatedUserId.valid) {
@@ -251,7 +254,7 @@ export const hardDeleteTask = async (
 export const restoreTask = async (
   userId: string,
   taskId: string,
-): Promise<IServiceResult> => {
+): Promise<IServiceResponse> => {
   try {
     const validatedUserId = validationId(userId);
     if (!validatedUserId.valid) {
@@ -289,7 +292,7 @@ export const updateTaskStatus = async (
   userId: string,
   taskId: string,
   payload: IUpdateStatusTaskPayload,
-): Promise<IServiceResult> => {
+): Promise<IServiceResponse> => {
   try {
     const validatedUserId = validationId(userId);
     if (!validatedUserId.valid) {
@@ -330,7 +333,7 @@ export const getTaskCompleted = async (
   userId: string,
   params: IServiceParams,
 ): Promise<
-  IServiceResult<{
+  IServiceResponse<{
     tasks: IResultDataTask[];
     pagination: IResultMetaDataTask;
   }>
@@ -400,7 +403,7 @@ export const getTaskPending = async (
   userId: string,
   params: IServiceParams,
 ): Promise<
-  IServiceResult<{
+  IServiceResponse<{
     tasks: IResultDataTask[];
     pagination: IResultMetaDataTask;
   }>
@@ -469,7 +472,7 @@ export const getTaskPending = async (
 export const taskDetail = async (
   userId: string,
   taskId: string,
-): Promise<IServiceResult<IResultDataTask>> => {
+): Promise<IServiceResponse<IResultDataTask>> => {
   try {
     const validatedUserId = validationId(userId);
     if (!validatedUserId.valid) {
