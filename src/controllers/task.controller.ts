@@ -89,20 +89,7 @@ export const handleSoftDeleteTask = async (req: AuthRequest, res: Response) => {
   });
 };
 
-export const handleRestoreTask = async (req: Request, res: Response) => {
-  const user_id: string = (req as any).user?.id;
-  const { task_id } = req.params;
-
-  const result = await taskService.restoreTask(user_id, task_id);
-
-  if (result.error) {
-    return res.status(result.code).json({ message: result.message });
-  }
-
-  return res.status(200).json({ data: result.data, message: result.message });
-};
-
-export const handleHardDelete = async (req: AuthRequest, res: Response) => {
+export const handleHardDeleteTask = async (req: AuthRequest, res: Response) => {
   const userId = req.user?.id;
   const { taskId } = req.params;
 
@@ -113,6 +100,19 @@ export const handleHardDelete = async (req: AuthRequest, res: Response) => {
   }
 
   return res.status(200).json({ message: result.message });
+};
+
+export const handleRestoreTask = async (req: AuthRequest, res: Response) => {
+  const userId = req.user?.id;
+  const { taskId } = req.params;
+
+  const result = await taskService.restoreTask({ userId, taskId });
+
+  if (result.error) {
+    return res.status(result.code).json({ message: result.message });
+  }
+
+  return res.status(200).json({ data: result.data, message: result.message });
 };
 
 export const handleTaskUpdateStatus = async (req: Request, res: Response) => {

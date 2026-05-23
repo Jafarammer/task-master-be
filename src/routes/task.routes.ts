@@ -6,7 +6,7 @@ import {
   handleGetTask,
   handleSoftDeleteTask,
   handleRestoreTask,
-  handleHardDelete,
+  handleHardDeleteTask,
   handleTaskUpdateStatus,
   handleGetTaskCompleted,
   handleGetTaskPending,
@@ -20,8 +20,8 @@ router.get("/completed", authToken, handleGetTaskCompleted);
 router.get("/pending", authToken, handleGetTaskPending);
 
 router.delete("/soft/:taskId", authToken, handleSoftDeleteTask);
-router.delete("/hard/:taskId", authToken, handleHardDelete);
-router.patch("/restore/:task_id", authToken, handleRestoreTask);
+router.delete("/hard/:taskId", authToken, handleHardDeleteTask);
+router.patch("/restore/:taskId", authToken, handleRestoreTask);
 router.patch("/status/:task_id", authToken, handleTaskUpdateStatus);
 
 router.post("/", authToken, handleCreateTask);

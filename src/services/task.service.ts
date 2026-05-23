@@ -223,7 +223,7 @@ export const getTask = async (
 
 export const softDeleteTask = async (
   payload: IDeleteTaskPayload,
-): Promise<ITaskServiceResult> => {
+): Promise<IServiceResult> => {
   try {
     const validationUserId = validationId(payload.userId);
     if (!validationUserId.valid) {
@@ -262,7 +262,7 @@ export const softDeleteTask = async (
 
 export const hardDeleteTask = async (
   payload: IDeleteTaskPayload,
-): Promise<ITaskServiceResult> => {
+): Promise<IServiceResult> => {
   try {
     const validatedUserId = validationId(payload.userId);
     if (!validatedUserId.valid) {
@@ -293,47 +293,38 @@ export const hardDeleteTask = async (
 };
 
 export const restoreTask = async (
-  user_id: string,
-  task_id: string,
-): Promise<ITaskServiceResult> => {
+  payload: IDeleteTaskPayload,
+): Promise<IServiceResult> => {
   try {
-    if (!user_id || !task_id) {
-      return {
-        error: true,
-        code: 400,
-        message: "user_id and task_id are required.",
-      };
+    const validatedUserId = validationId(payload.userId);
+    if (!validatedUserId.valid) {
+      return errorResponse(validatedUserId.message, 400);
     }
 
-    if (
-      !mongoose.isValidObjectId(user_id) ||
-      !mongoose.isValidObjectId(task_id)
-    ) {
-      return { error: true, code: 400, message: "Invalid id format" };
+    const validatedTaskId = validationId(payload.taskId);
+    if (!validatedTaskId.valid) {
+      return errorResponse(validatedTaskId.message, 400);
     }
 
     const query = {
-      _id: new Types.ObjectId(task_id),
-      user_id: new Types.ObjectId(user_id),
+      _id: validatedTaskId.value,
+      user_id: validatedUserId.value,
       deleted_at: { $ne: null },
     };
 
     const task = await Task.findOne(query).exec();
 
     if (!task) {
-      return {
-        error: true,
-        code: 404,
-        message: "Task not found or not deleted.",
-      };
+      return errorResponse("Task not found or not deleted", 404);
     }
 
     task.deleted_at = null;
     await task.save();
 
-    return { data: task, message: "Task restored successfully." };
-  } catch (error) {
-    return { error: true, code: 500, message: "Internal server error" };
+    return successResponse("Task restored successfully", 201);
+  } catch (error: any) {
+    console.error("RESTOR TASK ERROR", error);
+    return errorResponse("Internal server error", 500);
   }
 };
 
