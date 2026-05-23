@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import * as taskService from "../services/task.service";
 import { AuthRequest } from "../middleware/authMiddleware";
 import {
@@ -6,7 +6,7 @@ import {
   updateTaskValidation,
   updateStatusTaskValidation,
 } from "../validations/task.validate";
-import { IServiceParams } from "../interfaces/common.interface";
+import parseQueryParams from "../helpers/query.helper";
 
 export const handleCreateTask = async (req: AuthRequest, res: Response) => {
   const userId = req.user?.id;
@@ -56,13 +56,7 @@ export const handleUpdateTask = async (req: AuthRequest, res: Response) => {
 
 export const handleGetTask = async (req: AuthRequest, res: Response) => {
   const user_id: string = req.user?.id;
-  const params: IServiceParams = {
-    page: Number(req.query.page) || 1,
-    limit: Number(req.query.limit) || 5,
-    sortBy: (req.query.sortBy as string) || "createdAt",
-    order: (req.query.order as "asc" | "desc") || "desc",
-    query: (req.query.query as string) || "",
-  };
+  const params = parseQueryParams(req.query);
 
   const result = await taskService.getTask(user_id, params);
 
@@ -79,7 +73,7 @@ export const handleSoftDeleteTask = async (req: AuthRequest, res: Response) => {
   const userId = req.user?.id;
   const { taskId } = req.params;
 
-  const result = await taskService.softDeleteTask({ userId, taskId });
+  const result = await taskService.softDeleteTask(userId, taskId);
 
   if (result.error) {
     return res.status(result.code).json({ message: result.message });
@@ -94,7 +88,7 @@ export const handleHardDeleteTask = async (req: AuthRequest, res: Response) => {
   const userId = req.user?.id;
   const { taskId } = req.params;
 
-  const result = await taskService.hardDeleteTask({ userId, taskId });
+  const result = await taskService.hardDeleteTask(userId, taskId);
 
   if (result.error) {
     return res.status(result.code).json({ message: result.message });
@@ -107,7 +101,7 @@ export const handleRestoreTask = async (req: AuthRequest, res: Response) => {
   const userId = req.user?.id;
   const { taskId } = req.params;
 
-  const result = await taskService.restoreTask({ userId, taskId });
+  const result = await taskService.restoreTask(userId, taskId);
 
   if (result.error) {
     return res.status(result.code).json({ message: result.message });
@@ -149,13 +143,7 @@ export const handleGetTaskCompleted = async (
   res: Response,
 ) => {
   const userId = req.user.id;
-  const params: IServiceParams = {
-    page: Number(req.query.page) || 1,
-    limit: Number(req.query.limit) || 5,
-    sortBy: (req.query.sortBy as string) || "createdAt",
-    order: (req.query.order as "asc" | "desc") || "desc",
-    query: (req.query.query as string) || "",
-  };
+  const params = parseQueryParams(req.query);
 
   const result = await taskService.getTaskCompleted(userId, params);
 
@@ -170,13 +158,7 @@ export const handleGetTaskCompleted = async (
 
 export const handleGetTaskPending = async (req: AuthRequest, res: Response) => {
   const userId = req.user.id;
-  const params: IServiceParams = {
-    page: Number(req.query.page) || 1,
-    limit: Number(req.query.limit) || 5,
-    sortBy: (req.query.sortBy as string) || "createdAt",
-    order: (req.query.order as "asc" | "desc") || "desc",
-    query: (req.query.query as string) || "",
-  };
+  const params = parseQueryParams(req.query);
 
   const result = await taskService.getTaskPending(userId, params);
 

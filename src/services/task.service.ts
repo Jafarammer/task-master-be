@@ -1,52 +1,19 @@
-import Task, { ITask } from "../models/task.model";
-import mongoose, { Types } from "mongoose";
+import Task from "../models/task.model";
 import { IServiceResult, IServiceParams } from "../interfaces/common.interface";
 import {
   ITaskPayload,
-  IDeleteTaskPayload,
   IUpdateStatusTaskPayload,
+  IResultDataTask,
+  IResultMetaDataTask,
 } from "../interfaces/task.interface";
-import { ITaskServiceResult } from "../types/task";
-import { taskAdapter } from "../adapters/task.adapter";
 import validationId from "../helpers/validationId.helper";
-import {
-  comparePassword,
-  hashPassword,
-  normalizeEmail,
-} from "../helpers/auth.helper";
 import { successResponse, errorResponse } from "../helpers/response.helper";
 import getPagination from "../helpers/pagination.helper";
-
-interface IGetTaskParams {
-  user_id: Types.ObjectId | string | undefined;
-  task_id?: Types.ObjectId | string | undefined;
-  page?: number;
-  limit?: number;
-  sort_by?: string;
-  order?: "asc" | "desc";
-  query?: string;
-}
-
-interface ISearchTaskParams {
-  user_id: Types.ObjectId | string | undefined;
-  query: string;
-  page?: number;
-  limit?: number;
-  sort_by?: string;
-  order?: "asc" | "desc";
-}
 
 export const createTask = async (
   id: string,
   payload: ITaskPayload,
-): Promise<
-  IServiceResult<{
-    title: string;
-    description: string;
-    dueDate: Date | string;
-    priority: "low" | "medium" | "high";
-  }>
-> => {
+): Promise<IServiceResult<IResultDataTask>> => {
   try {
     const validatedId = validationId(id);
     if (!validatedId.valid) {
@@ -64,10 +31,12 @@ export const createTask = async (
     await newTask.save();
 
     return successResponse("Create task successfully", 201, {
-      title: payload.title,
-      description: payload.description,
-      dueDate: payload.dueDate,
-      priority: payload.priority,
+      id: newTask.id,
+      title: newTask.title,
+      description: newTask.description,
+      dueDate: newTask.due_date.toISOString().split("T")[0],
+      priority: newTask.priority,
+      isCompleted: newTask.is_completed,
     });
   } catch (error: any) {
     console.error("CREATE TASK ERROR", error);
@@ -79,14 +48,7 @@ export const updateTask = async (
   id: string,
   user_id: string,
   payload: ITaskPayload,
-): Promise<
-  IServiceResult<{
-    title: string;
-    description: string;
-    dueDate: Date | string;
-    priority: "low" | "medium" | "high";
-  }>
-> => {
+): Promise<IServiceResult<IResultDataTask>> => {
   try {
     const validatedTaskId = validationId(id);
 
@@ -129,10 +91,12 @@ export const updateTask = async (
     await task.save();
 
     return successResponse("Update task successfully", 201, {
+      id: id,
       title: task.title,
       description: task.description,
       dueDate: task.due_date.toISOString().split("T")[0],
       priority: task.priority as "low" | "medium" | "high",
+      isCompleted: task.is_completed,
     });
   } catch (error: any) {
     console.error("UPDATE TASK ERROR:", error);
@@ -145,22 +109,8 @@ export const getTask = async (
   params: IServiceParams,
 ): Promise<
   IServiceResult<{
-    tasks: {
-      id: string;
-      title: string;
-      description: string;
-      dueDate: string;
-      priority: "low" | "medium" | "high";
-      isCompleted: boolean;
-      createdAt: Date;
-      updatedAt: Date;
-    }[];
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      totalPages: number;
-    };
+    tasks: IResultDataTask[];
+    pagination: IResultMetaDataTask;
   }>
 > => {
   try {
@@ -211,8 +161,6 @@ export const getTask = async (
         dueDate: task.due_date.toISOString().split("T")[0],
         priority: task.priority as "low" | "medium" | "high",
         isCompleted: task.is_completed,
-        createdAt: task.createdAt,
-        updatedAt: task.updatedAt,
       })),
       pagination: {
         page: pagination.page,
@@ -228,15 +176,16 @@ export const getTask = async (
 };
 
 export const softDeleteTask = async (
-  payload: IDeleteTaskPayload,
+  userId: string,
+  taskId: string,
 ): Promise<IServiceResult> => {
   try {
-    const validationUserId = validationId(payload.userId);
+    const validationUserId = validationId(userId);
     if (!validationUserId.valid) {
       return errorResponse(validationUserId.message, 400);
     }
 
-    const validationTaskId = validationId(payload.taskId);
+    const validationTaskId = validationId(taskId);
     if (!validationTaskId.valid) {
       return errorResponse(validationTaskId.message, 400);
     }
@@ -267,15 +216,16 @@ export const softDeleteTask = async (
 };
 
 export const hardDeleteTask = async (
-  payload: IDeleteTaskPayload,
+  userId: string,
+  taskId: string,
 ): Promise<IServiceResult> => {
   try {
-    const validatedUserId = validationId(payload.userId);
+    const validatedUserId = validationId(userId);
     if (!validatedUserId.valid) {
       return errorResponse(validatedUserId.message, 400);
     }
 
-    const validatedTaskId = validationId(payload.taskId);
+    const validatedTaskId = validationId(taskId);
     if (!validatedTaskId.valid) {
       return errorResponse(validatedTaskId.message, 400);
     }
@@ -299,15 +249,16 @@ export const hardDeleteTask = async (
 };
 
 export const restoreTask = async (
-  payload: IDeleteTaskPayload,
+  userId: string,
+  taskId: string,
 ): Promise<IServiceResult> => {
   try {
-    const validatedUserId = validationId(payload.userId);
+    const validatedUserId = validationId(userId);
     if (!validatedUserId.valid) {
       return errorResponse(validatedUserId.message, 400);
     }
 
-    const validatedTaskId = validationId(payload.taskId);
+    const validatedTaskId = validationId(taskId);
     if (!validatedTaskId.valid) {
       return errorResponse(validatedTaskId.message, 400);
     }
@@ -380,22 +331,8 @@ export const getTaskCompleted = async (
   params: IServiceParams,
 ): Promise<
   IServiceResult<{
-    tasks: {
-      id: string;
-      title: string;
-      description: string;
-      dueDate: string;
-      priority: "low" | "medium" | "high";
-      isCompleted: boolean;
-      createdAt: Date;
-      updatedAt: Date;
-    }[];
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      totalPages: number;
-    };
+    tasks: IResultDataTask[];
+    pagination: IResultMetaDataTask;
   }>
 > => {
   try {
@@ -445,8 +382,6 @@ export const getTaskCompleted = async (
         dueDate: task.due_date.toISOString().split("T")[0],
         priority: task.priority as "low" | "medium" | "high",
         isCompleted: task.is_completed,
-        createdAt: task.createdAt,
-        updatedAt: task.updatedAt,
       })),
       pagination: {
         page: pagination.page,
@@ -466,22 +401,8 @@ export const getTaskPending = async (
   params: IServiceParams,
 ): Promise<
   IServiceResult<{
-    tasks: {
-      id: string;
-      title: string;
-      description: string;
-      dueDate: string;
-      priority: "low" | "medium" | "high";
-      isCompleted: boolean;
-      createdAt: Date;
-      updatedAt: Date;
-    }[];
-    pagination: {
-      page: number;
-      limit: number;
-      total: number;
-      totalPages: number;
-    };
+    tasks: IResultDataTask[];
+    pagination: IResultMetaDataTask;
   }>
 > => {
   try {
@@ -531,8 +452,6 @@ export const getTaskPending = async (
         dueDate: task.due_date.toISOString().split("T")[0],
         priority: task.priority as "low" | "medium" | "high",
         isCompleted: task.is_completed,
-        createdAt: task.createdAt,
-        updatedAt: task.updatedAt,
       })),
       pagination: {
         page: pagination.page,
@@ -550,18 +469,7 @@ export const getTaskPending = async (
 export const taskDetail = async (
   userId: string,
   taskId: string,
-): Promise<
-  IServiceResult<{
-    id: string;
-    title: string;
-    description: string;
-    dueDate: string;
-    priority: "low" | "medium" | "high";
-    isCompleted: boolean;
-    createdAt: Date;
-    updatedAt: Date;
-  }>
-> => {
+): Promise<IServiceResult<IResultDataTask>> => {
   try {
     const validatedUserId = validationId(userId);
     if (!validatedUserId.valid) {
@@ -592,8 +500,6 @@ export const taskDetail = async (
       dueDate: taskFindId.due_date.toISOString().split("T")[0],
       priority: taskFindId.priority as "low" | "medium" | "high",
       isCompleted: taskFindId.is_completed,
-      createdAt: taskFindId.createdAt,
-      updatedAt: taskFindId.updatedAt,
     });
   } catch (error: any) {
     console.error("TASK DETAIL ERROR:", error);
