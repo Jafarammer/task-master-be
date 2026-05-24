@@ -12,6 +12,11 @@ import {
 import validationId from "../helpers/validationId.helper";
 import { successResponse, errorResponse } from "../helpers/response.helper";
 import getPagination from "../helpers/pagination.helper";
+import {
+  MAX_USER_STORAGE,
+  calculateTaskSize,
+  validateUserStorage,
+} from "../helpers/storage.helper";
 
 export const createTask = async (
   id: string,
@@ -21,6 +26,22 @@ export const createTask = async (
     const validatedId = validationId(id);
     if (!validatedId.valid) {
       return errorResponse(validatedId.message, 400);
+    }
+
+    const taskSize = calculateTaskSize({
+      title: payload.title,
+      description: payload.description,
+    });
+
+    const storageValidation = await validateUserStorage(
+      validatedId.value,
+      taskSize,
+    );
+    if (!storageValidation.valid) {
+      return errorResponse(
+        "Storage limit exceeded. Maximum storage is 5 MB",
+        400,
+      );
     }
 
     const newTask = await Task.create({
@@ -73,6 +94,25 @@ export const updateTask = async (
 
     if (!task) {
       return errorResponse("Task not found", 404);
+    }
+
+    const oldTaskSize = task.size;
+    const newTaskSize = calculateTaskSize({
+      title: payload.title || task.title,
+      description: payload.description || task.description,
+    });
+
+    const storageValidation = await validateUserStorage(
+      validatedUserId.value,
+      newTaskSize,
+      oldTaskSize,
+    );
+
+    if (!storageValidation.valid) {
+      return errorResponse(
+        "Storage limit exceeded. Maximum storage is 5 MB",
+        400,
+      );
     }
 
     if (payload.title !== undefined) {
@@ -276,6 +316,17 @@ export const restoreTask = async (
 
     if (!task) {
       return errorResponse("Task not found or not deleted", 404);
+    }
+
+    const storageValidation = await validateUserStorage(
+      validatedUserId.value,
+      task.size,
+    );
+    if (!storageValidation.valid) {
+      return errorResponse(
+        "Storage limit exceeded. Maximum storage is 5 MB",
+        400,
+      );
     }
 
     task.deleted_at = null;

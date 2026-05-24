@@ -4,21 +4,14 @@ export type TaskPriority = "low" | "medium" | "high";
 
 export interface ITask extends Document {
   user_id: Types.ObjectId;
-
   title: string;
-
   description: string;
-
   due_date: Date;
-
   priority: TaskPriority;
-
   is_completed: boolean;
-
   deleted_at: Date | null;
-
+  size: number;
   createdAt: Date;
-
   updatedAt: Date;
 }
 
@@ -59,6 +52,12 @@ const taskSchema = new Schema<ITask>(
     deleted_at: {
       type: Date,
       default: null,
+    },
+
+    size: {
+      type: Number,
+      required: true,
+      default: 0,
     },
   },
   {
