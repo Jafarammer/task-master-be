@@ -9,9 +9,6 @@ import {
   EMAIL_SMTP_PASS,
 } from "../env";
 
-// =============================
-// ✅ CREATE SMTP TRANSPORTER
-// =============================
 const transporter = nodemailer.createTransport({
   host: EMAIL_SMTP_HOST,
   port: Number(EMAIL_SMTP_PORT),
@@ -22,17 +19,11 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// =================================
-// ✅ VERIFY SMTP (NO CRASH STARTUP)
-// =================================
 transporter
   .verify()
-  .then(() => console.log("✅ SMTP READY"))
-  .catch((err) => console.error("❌ SMTP FAIL:", err.message));
+  .then(() => console.log("✅ SMTP REGISTRATION READY"))
+  .catch((err) => console.error("❌ SMTP REGISTRATION FAIL:", err.message));
 
-// =================
-// ✅ SEND MAIL
-// =================
 export interface ISendMail {
   from: string;
   to: string;
@@ -44,14 +35,10 @@ export const sendMail = async ({ ...mailParams }: ISendMail) => {
   return await transporter.sendMail(mailParams);
 };
 
-// ========================
-// ✅ RENDER EJS TEMPLATE
-// ========================
 export const renderMailHtml = async (
   template: string,
   data: any,
 ): Promise<string> => {
-  // ✅ SESUAI STRUKTUR BUILD KAMU
   const basePath =
     process.env.NODE_ENV === "production"
       ? path.resolve(
@@ -65,7 +52,7 @@ export const renderMailHtml = async (
   console.log("📨 EJS TEMPLATE PATH:", templatePath);
 
   if (!fs.existsSync(templatePath)) {
-    throw new Error(`❌ EJS TEMPLATE NOT FOUND: ${templatePath}`);
+    throw new Error(`EJS TEMPLATE NOT FOUND: ${templatePath}`);
   }
 
   return await ejs.renderFile(templatePath, data);

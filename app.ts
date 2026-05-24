@@ -4,7 +4,6 @@ import cors from "cors";
 import helmet from "helmet";
 import { CLIENT_HOST } from "./src/utils/env";
 
-import userRoutes from "./src/routes/user.routes";
 import authRoutes from "./src/routes/auth.routes";
 import profileRoutes from "./src/routes/profile.routes";
 import taskRoutes from "./src/routes/task.routes";
@@ -39,7 +38,6 @@ app.use(morgan("dev"));
 
 // Routes
 app.use("/api/auth", authRoutes);
-app.use("/api/users", userRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/task", taskRoutes);
 

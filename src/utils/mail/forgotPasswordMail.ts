@@ -21,8 +21,8 @@ const transporter = nodemailer.createTransport({
 
 transporter
   .verify()
-  .then(() => console.log("✅ SMTP READY"))
-  .catch((err) => console.error("SMTP FAIL:", err.message));
+  .then(() => console.log("✅ SMTP FORGOT PASSWORD READY"))
+  .catch((err) => console.error("❌ SMTP FORGOT PASSWORD FAIL:", err.message));
 
 export interface ISendMail {
   from: string;
