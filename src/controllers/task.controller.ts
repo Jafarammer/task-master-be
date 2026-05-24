@@ -222,3 +222,17 @@ export const handleGetTrashStatistics = async (
     .status(result.code)
     .json({ data: result.data, message: result.message });
 };
+
+export const handleDeleteAllTaskTrash = async (
+  req: AuthRequest,
+  res: Response,
+) => {
+  const userId = req.user.id;
+  const result = await taskService.deleteAllTaskTrash(userId);
+
+  if (result.error) {
+    return res.status(result.code).json({ message: result.message });
+  }
+
+  return res.status(result.code).json({ message: result.message });
+};

@@ -707,3 +707,37 @@ export const getTrashStatistics = async (
     return errorResponse("Internal server error", 500);
   }
 };
+
+export const deleteAllTaskTrash = async (
+  userId: string,
+): Promise<IServiceResponse> => {
+  try {
+    const validatedId = validationId(userId);
+    if (!validatedId.valid) {
+      return errorResponse(validatedId.message, 400);
+    }
+
+    const trashTasks = await Task.find({
+      user_id: validatedId.value,
+      deleted_at: {
+        $ne: null,
+      },
+    });
+
+    if (trashTasks.length === 0) {
+      return errorResponse("Trash is empty", 404);
+    }
+
+    await Task.deleteMany({
+      user_id: validatedId.value,
+      deleted_at: {
+        $ne: null,
+      },
+    });
+
+    return successResponse("Trash emptied successfully", 200);
+  } catch (error: any) {
+    console.error("DELETE ALL TASK TRASH ERROR", error);
+    return errorResponse("Internal server error", 500);
+  }
+};

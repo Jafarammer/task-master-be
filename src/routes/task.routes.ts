@@ -13,6 +13,7 @@ import {
   handleGetDetailTask,
   handleGetTaskTrash,
   handleGetTrashStatistics,
+  handleDeleteAllTaskTrash,
 } from "../controllers/task.controller";
 
 const router = Router();
@@ -24,6 +25,7 @@ router.get("/trash", authToken, handleGetTaskTrash);
 
 router.delete("/soft/:taskId", authToken, handleSoftDeleteTask);
 router.delete("/hard/:taskId", authToken, handleHardDeleteTask);
+router.delete("/trash/all", authToken, handleDeleteAllTaskTrash);
 router.patch("/restore/:taskId", authToken, handleRestoreTask);
 router.patch("/status/:taskId", authToken, handleTaskUpdateStatus);
 
