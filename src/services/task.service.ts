@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Task from "../models/task.model";
 import {
   IServiceParams,
@@ -8,14 +9,16 @@ import {
   IUpdateStatusTaskPayload,
   IResultDataTask,
   IResultMetaDataTask,
+  IResultDataTrashStatistics,
 } from "../interfaces/task.interface";
 import validationId from "../helpers/validationId.helper";
 import { successResponse, errorResponse } from "../helpers/response.helper";
 import getPagination from "../helpers/pagination.helper";
 import {
-  MAX_USER_STORAGE,
   calculateTaskSize,
   validateUserStorage,
+  MAX_USER_STORAGE,
+  formatBytes,
 } from "../helpers/storage.helper";
 
 export const createTask = async (
@@ -50,6 +53,7 @@ export const createTask = async (
       description: payload.description,
       due_date: payload.dueDate,
       priority: payload.priority,
+      size: taskSize,
     });
 
     await newTask.save();
@@ -130,6 +134,7 @@ export const updateTask = async (
     if (payload.priority !== undefined) {
       task.priority = payload.priority;
     }
+    task.size = newTaskSize;
 
     await task.save();
 
@@ -630,6 +635,75 @@ export const getTaskTrash = async (
     });
   } catch (error: any) {
     console.error("GET TASK TRASH ERROR", error);
+    return errorResponse("Internal server error", 500);
+  }
+};
+
+export const getTrashStatistics = async (
+  userid: string,
+): Promise<IServiceResponse<IResultDataTrashStatistics>> => {
+  try {
+    const validatedId = validationId(userid);
+    if (!validatedId.valid) {
+      return errorResponse(validatedId.message, 400);
+    }
+
+    const objectUserId = new mongoose.Types.ObjectId(validatedId.value);
+
+    const [totalItems, trashItems, activeItems, storageResult] =
+      await Promise.all([
+        // all task
+        Task.countDocuments({
+          user_id: objectUserId,
+        }),
+        // trash only
+        Task.countDocuments({
+          user_id: objectUserId,
+          deleted_at: {
+            $ne: null,
+          },
+        }),
+        // active only
+        Task.countDocuments({
+          user_id: objectUserId,
+          deleted_at: null,
+        }),
+        // active storage only
+        Task.aggregate([
+          {
+            $match: {
+              user_id: objectUserId,
+              deleted_at: null,
+            },
+          },
+          {
+            $group: {
+              _id: null,
+              totalSize: {
+                $sum: "$size",
+              },
+            },
+          },
+        ]),
+      ]);
+
+    const usedBytes = storageResult[0]?.totalSize || 0;
+
+    const percentage = Math.min(
+      Math.round((usedBytes / MAX_USER_STORAGE) * 100),
+      100,
+    );
+
+    return successResponse("Get trash statistics successfully", 200, {
+      totalItems,
+      trashItems,
+      activeItems,
+      usedStorage: formatBytes(usedBytes),
+      maxStorage: formatBytes(MAX_USER_STORAGE),
+      percentage,
+    });
+  } catch (error: any) {
+    console.error("GET TRASH STATISTICS ERROR", error);
     return errorResponse("Internal server error", 500);
   }
 };

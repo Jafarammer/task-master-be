@@ -26,3 +26,12 @@ export interface IResultMetaDataTask {
   total: number;
   totalPages: number;
 }
+
+export interface IResultDataTrashStatistics {
+  totalItems: number;
+  trashItems: number;
+  activeItems: number;
+  usedStorage: string;
+  maxStorage: string;
+  percentage: number;
+}

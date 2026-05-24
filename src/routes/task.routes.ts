@@ -12,6 +12,7 @@ import {
   handleGetTaskPending,
   handleGetDetailTask,
   handleGetTaskTrash,
+  handleGetTrashStatistics,
 } from "../controllers/task.controller";
 
 const router = Router();
@@ -28,6 +29,7 @@ router.patch("/status/:taskId", authToken, handleTaskUpdateStatus);
 
 router.post("/", authToken, handleCreateTask);
 
+router.get("/trash/statistics", authToken, handleGetTrashStatistics);
 router.get("/detail/:id", authToken, handleGetDetailTask);
 router.patch("/:id", authToken, handleUpdateTask);
 

@@ -64,13 +64,11 @@ export const handleGetTask = async (req: AuthRequest, res: Response) => {
     return res.status(result.code).json({ message: result.message });
   }
 
-  return res
-    .status(result.code)
-    .json({
-      data: result.data.tasks,
-      metaData: result.data.pagination,
-      message: result.message,
-    });
+  return res.status(result.code).json({
+    data: result.data.tasks,
+    metaData: result.data.pagination,
+    message: result.message,
+  });
 };
 
 export const handleSoftDeleteTask = async (req: AuthRequest, res: Response) => {
@@ -207,4 +205,20 @@ export const handleGetTaskTrash = async (req: AuthRequest, res: Response) => {
     metaData: result.data.pagination,
     message: result.message,
   });
+};
+
+export const handleGetTrashStatistics = async (
+  req: AuthRequest,
+  res: Response,
+) => {
+  const userId = req.user.id;
+  const result = await taskService.getTrashStatistics(userId);
+
+  if (result.error) {
+    return res.status(result.code).json({ message: result.message });
+  }
+
+  return res
+    .status(result.code)
+    .json({ data: result.data, message: result.message });
 };
