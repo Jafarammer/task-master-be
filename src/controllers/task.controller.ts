@@ -66,7 +66,11 @@ export const handleGetTask = async (req: AuthRequest, res: Response) => {
 
   return res
     .status(result.code)
-    .json({ data: result.data.tasks, meta_data: result.data.pagination });
+    .json({
+      data: result.data.tasks,
+      metaData: result.data.pagination,
+      message: result.message,
+    });
 };
 
 export const handleSoftDeleteTask = async (req: AuthRequest, res: Response) => {
@@ -151,9 +155,11 @@ export const handleGetTaskCompleted = async (
     return res.status(result.code).json({ message: result.message });
   }
 
-  return res
-    .status(result.code)
-    .json({ data: result.data.tasks, meta_data: result.data.pagination });
+  return res.status(result.code).json({
+    data: result.data.tasks,
+    metaData: result.data.pagination,
+    message: result.message,
+  });
 };
 
 export const handleGetTaskPending = async (req: AuthRequest, res: Response) => {
@@ -166,9 +172,11 @@ export const handleGetTaskPending = async (req: AuthRequest, res: Response) => {
     return res.status(result.code).json({ message: result.message });
   }
 
-  return res
-    .status(result.code)
-    .json({ data: result.data.tasks, meta_data: result.data.pagination });
+  return res.status(result.code).json({
+    data: result.data.tasks,
+    metaData: result.data.pagination,
+    message: result.message,
+  });
 };
 
 export const handleGetDetailTask = async (req: AuthRequest, res: Response) => {
@@ -182,4 +190,21 @@ export const handleGetDetailTask = async (req: AuthRequest, res: Response) => {
   return res
     .status(result.code)
     .json({ data: result.data, message: result.message });
+};
+
+export const handleGetTaskTrash = async (req: AuthRequest, res: Response) => {
+  const userId = req.user.id;
+  const params = parseQueryParams(req.query);
+
+  const result = await taskService.getTaskTrash(userId, params);
+
+  if (result.error) {
+    return res.status(result.code).json({ message: result.message });
+  }
+
+  return res.status(result.code).json({
+    data: result.data.tasks,
+    metaData: result.data.pagination,
+    message: result.message,
+  });
 };

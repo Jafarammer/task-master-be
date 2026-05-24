@@ -11,6 +11,7 @@ import {
   handleGetTaskCompleted,
   handleGetTaskPending,
   handleGetDetailTask,
+  handleGetTaskTrash,
 } from "../controllers/task.controller";
 
 const router = Router();
@@ -18,6 +19,7 @@ const router = Router();
 router.get("/", authToken, handleGetTask);
 router.get("/completed", authToken, handleGetTaskCompleted);
 router.get("/pending", authToken, handleGetTaskPending);
+router.get("/trash", authToken, handleGetTaskTrash);
 
 router.delete("/soft/:taskId", authToken, handleSoftDeleteTask);
 router.delete("/hard/:taskId", authToken, handleHardDeleteTask);

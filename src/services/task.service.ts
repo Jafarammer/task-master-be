@@ -509,3 +509,76 @@ export const taskDetail = async (
     return errorResponse("Internal server error", 500);
   }
 };
+
+export const getTaskTrash = async (
+  userId: string,
+  params: IServiceParams,
+): Promise<
+  IServiceResponse<{
+    tasks: IResultDataTask[];
+    pagination: IResultMetaDataTask;
+  }>
+> => {
+  try {
+    const validatedId = validationId(userId);
+    if (!validatedId.valid) {
+      return errorResponse(validatedId.message, 400);
+    }
+
+    const pagination = getPagination(params);
+
+    const filters: Record<string, unknown> = {
+      user_id: validatedId.value,
+      deleted_at: {
+        $ne: null,
+      },
+    };
+
+    if (params.query) {
+      filters.$or = [
+        {
+          title: {
+            $regex: params.query,
+            $options: "i",
+          },
+        },
+        {
+          description: {
+            $regex: params.query,
+            $options: "i",
+          },
+        },
+      ];
+    }
+
+    const [tasks, total] = await Promise.all([
+      Task.find(filters)
+        .sort(pagination.sort)
+        .skip(pagination.skip)
+        .limit(pagination.limit),
+      Task.countDocuments(filters),
+    ]);
+
+    return successResponse("Get task trash successfully", 200, {
+      tasks: tasks.map((task) => ({
+        id: task.id,
+        title: task.title,
+        description: task.description,
+        dueDate: task.due_date.toISOString().split("T")[0],
+        priority: task.priority as "low" | "medium" | "high",
+        isCompleted: task.is_completed,
+        createdAt: task.createdAt,
+        updatedAt: task.updatedAt,
+      })),
+      pagination: {
+        page: pagination.page,
+        limit: pagination.limit,
+        total,
+        totalPages: Math.ceil(total / pagination.limit),
+      },
+    });
+  } catch (error: any) {
+    console.error("GET TASK TRASH ERROR", error);
+    return errorResponse("Internal server error", 500);
+  }
+};
