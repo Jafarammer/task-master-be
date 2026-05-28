@@ -623,8 +623,6 @@ export const getTaskTrash = async (
         dueDate: task.due_date.toISOString().split("T")[0],
         priority: task.priority as "low" | "medium" | "high",
         isCompleted: task.is_completed,
-        createdAt: task.createdAt,
-        updatedAt: task.updatedAt,
       })),
       pagination: {
         page: pagination.page,

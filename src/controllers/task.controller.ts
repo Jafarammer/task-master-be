@@ -27,7 +27,6 @@ export const handleCreateTask = async (req: AuthRequest, res: Response) => {
 
   return res.status(201).json({
     message: result.message,
-    data: result.data,
   });
 };
 
@@ -49,9 +48,7 @@ export const handleUpdateTask = async (req: AuthRequest, res: Response) => {
     return res.status(result.code).json({ message: result.message });
   }
 
-  return res
-    .status(result.code)
-    .json({ data: result.data, message: result.message });
+  return res.status(result.code).json({ message: result.message });
 };
 
 export const handleGetTask = async (req: AuthRequest, res: Response) => {

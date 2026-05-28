@@ -86,7 +86,7 @@ export const handleChangePassword = async (req: AuthRequest, res: Response) => {
   }
   return res.status(result.code).json({
     message: result.message,
-    data: result.data.requireRelogin,
+    data: result.data,
   });
 };
 

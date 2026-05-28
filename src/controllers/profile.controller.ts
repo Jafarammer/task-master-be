@@ -46,8 +46,5 @@ export const handleUpdateProfilePicture = async (
   if (result.error) {
     return res.status(result.code).json({ message: result.message });
   }
-  return res.status(result.code).json({
-    message: result.message,
-    data: result.data,
-  });
+  return res.status(result.code).json({ message: result.message });
 };
