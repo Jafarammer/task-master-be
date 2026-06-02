@@ -1,6 +1,8 @@
 export interface ITaskPayload {
   title: string;
   description: string;
+  startDate: Date | string;
+  endDate: Date | string;
   dueDate: Date | string;
   priority: "low" | "medium" | "high";
 }
@@ -13,9 +15,12 @@ export interface IResultDataTask {
   id: string;
   title: string;
   description: string;
+  startDate: string;
+  endDate: string;
   dueDate: string;
   priority: "low" | "medium" | "high";
   isCompleted: boolean;
+  isExpired?: boolean | null;
   createdAt?: Date;
   updatedAt?: Date;
 }

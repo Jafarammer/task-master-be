@@ -51,6 +51,8 @@ export const createTask = async (
       user_id: validatedId.value,
       title: payload.title,
       description: payload.description,
+      start_date: payload.startDate,
+      end_date: payload.endDate,
       due_date: payload.dueDate,
       priority: payload.priority,
       size: taskSize,
@@ -62,6 +64,8 @@ export const createTask = async (
       id: newTask.id,
       title: newTask.title,
       description: newTask.description,
+      startDate: newTask.start_date.toISOString().split("T")[0],
+      endDate: newTask.end_date.toISOString().split("T")[0],
       dueDate: newTask.due_date.toISOString().split("T")[0],
       priority: newTask.priority,
       isCompleted: newTask.is_completed,
@@ -127,6 +131,14 @@ export const updateTask = async (
       task.description = payload.description;
     }
 
+    if (payload.startDate !== undefined) {
+      task.start_date = new Date(payload.startDate);
+    }
+
+    if (payload.endDate !== undefined) {
+      task.end_date = new Date(payload.endDate);
+    }
+
     if (payload.dueDate !== undefined) {
       task.due_date = new Date(payload.dueDate);
     }
@@ -142,6 +154,8 @@ export const updateTask = async (
       id: id,
       title: task.title,
       description: task.description,
+      startDate: task.start_date.toISOString().split("T")[0],
+      endDate: task.end_date.toISOString().split("T")[0],
       dueDate: task.due_date.toISOString().split("T")[0],
       priority: task.priority as "low" | "medium" | "high",
       isCompleted: task.is_completed,
@@ -206,6 +220,12 @@ export const getTask = async (
         id: task.id,
         title: task.title,
         description: task.description,
+        startDate: task.start_date
+          ? task.start_date.toISOString().split("T")[0]
+          : null,
+        endDate: task.end_date
+          ? task.end_date.toISOString().split("T")[0]
+          : null,
         dueDate: task.due_date.toISOString().split("T")[0],
         priority: task.priority as "low" | "medium" | "high",
         isCompleted: task.is_completed,
@@ -438,6 +458,12 @@ export const getTaskCompleted = async (
         id: task.id,
         title: task.title,
         description: task.description,
+        startDate: task.start_date
+          ? task.start_date.toISOString().split("T")[0]
+          : null,
+        endDate: task.end_date
+          ? task.end_date.toISOString().split("T")[0]
+          : null,
         dueDate: task.due_date.toISOString().split("T")[0],
         priority: task.priority as "low" | "medium" | "high",
         isCompleted: task.is_completed,
@@ -508,6 +534,12 @@ export const getTaskPending = async (
         id: task.id,
         title: task.title,
         description: task.description,
+        startDate: task.start_date
+          ? task.start_date.toISOString().split("T")[0]
+          : null,
+        endDate: task.end_date
+          ? task.end_date.toISOString().split("T")[0]
+          : null,
         dueDate: task.due_date.toISOString().split("T")[0],
         priority: task.priority as "low" | "medium" | "high",
         isCompleted: task.is_completed,
@@ -556,6 +588,12 @@ export const taskDetail = async (
       id: taskFindId.id,
       title: taskFindId.title,
       description: taskFindId.description,
+      startDate: taskFindId.start_date
+        ? taskFindId.start_date.toISOString().split("T")[0]
+        : null,
+      endDate: taskFindId.end_date
+        ? taskFindId.end_date.toISOString().split("T")[0]
+        : null,
       dueDate: taskFindId.due_date.toISOString().split("T")[0],
       priority: taskFindId.priority as "low" | "medium" | "high",
       isCompleted: taskFindId.is_completed,
@@ -620,6 +658,12 @@ export const getTaskTrash = async (
         id: task.id,
         title: task.title,
         description: task.description,
+        startDate: task.start_date
+          ? task.start_date.toISOString().split("T")[0]
+          : null,
+        endDate: task.end_date
+          ? task.end_date.toISOString().split("T")[0]
+          : null,
         dueDate: task.due_date.toISOString().split("T")[0],
         priority: task.priority as "low" | "medium" | "high",
         isCompleted: task.is_completed,

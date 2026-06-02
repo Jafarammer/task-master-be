@@ -6,6 +6,8 @@ export interface ITask extends Document {
   user_id: Types.ObjectId;
   title: string;
   description: string;
+  start_date: Date | null;
+  end_date: Date | null;
   due_date: Date;
   priority: TaskPriority;
   is_completed: boolean;
@@ -32,6 +34,9 @@ const taskSchema = new Schema<ITask>(
       type: String,
       required: true,
     },
+
+    start_date: { type: Date, default: null },
+    end_date: { type: Date, default: null },
 
     due_date: {
       type: Date,
