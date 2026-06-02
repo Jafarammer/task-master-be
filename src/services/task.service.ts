@@ -229,6 +229,9 @@ export const getTask = async (
         dueDate: task.due_date.toISOString().split("T")[0],
         priority: task.priority as "low" | "medium" | "high",
         isCompleted: task.is_completed,
+        isExpired: task.end_date
+          ? task.end_date < new Date() && !task.is_completed
+          : null,
       })),
       pagination: {
         page: pagination.page,
@@ -543,6 +546,9 @@ export const getTaskPending = async (
         dueDate: task.due_date.toISOString().split("T")[0],
         priority: task.priority as "low" | "medium" | "high",
         isCompleted: task.is_completed,
+        isExpired: task.end_date
+          ? task.end_date < new Date() && !task.is_completed
+          : null,
       })),
       pagination: {
         page: pagination.page,
@@ -597,6 +603,9 @@ export const taskDetail = async (
       dueDate: taskFindId.due_date.toISOString().split("T")[0],
       priority: taskFindId.priority as "low" | "medium" | "high",
       isCompleted: taskFindId.is_completed,
+      isExpired: taskFindId.end_date
+        ? taskFindId.end_date < new Date() && !taskFindId.is_completed
+        : null,
     });
   } catch (error: any) {
     console.error("TASK DETAIL ERROR:", error);
