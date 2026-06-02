@@ -9,9 +9,6 @@ export const createTaskValidation = z.object({
   endDate: z.coerce
     .date({ error: "End date is required" })
     .min(new Date().setHours(0, 0, 0, 0), "Date cannot be earlier than today"),
-  dueDate: z.coerce
-    .date({ error: "Due date is required" })
-    .min(new Date().setHours(0, 0, 0, 0), "Date cannot be earlier than today"),
   priority: z.enum(["low", "medium", "high"], {
     error: "priority must be one of, low, medium, high ",
   }),
@@ -23,7 +20,6 @@ export const updateTaskValidation = z
     description: z.string({ error: "Description is required" }),
     startDate: z.coerce.date({ error: "Start date is required" }),
     endDate: z.coerce.date({ error: "End date is required" }),
-    dueDate: z.coerce.date({ error: "Due date is required" }),
     priority: z.enum(["low", "medium", "high"], {
       error: "priority must be one of, low, medium, high ",
     }),

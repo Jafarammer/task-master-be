@@ -3,7 +3,6 @@ export interface ITaskPayload {
   description: string;
   startDate: Date | string;
   endDate: Date | string;
-  dueDate: Date | string;
   priority: "low" | "medium" | "high";
 }
 
@@ -17,7 +16,6 @@ export interface IResultDataTask {
   description: string;
   startDate: string;
   endDate: string;
-  dueDate: string;
   priority: "low" | "medium" | "high";
   isCompleted: boolean;
   isExpired?: boolean | null;

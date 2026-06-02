@@ -8,7 +8,7 @@ export interface ITask extends Document {
   description: string;
   start_date: Date | null;
   end_date: Date | null;
-  due_date: Date;
+  due_date: Date | null;
   priority: TaskPriority;
   is_completed: boolean;
   deleted_at: Date | null;
@@ -40,7 +40,7 @@ const taskSchema = new Schema<ITask>(
 
     due_date: {
       type: Date,
-      required: true,
+      default: null,
     },
 
     priority: {

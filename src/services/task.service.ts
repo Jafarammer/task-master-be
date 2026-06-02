@@ -20,6 +20,7 @@ import {
   MAX_USER_STORAGE,
   formatBytes,
 } from "../helpers/storage.helper";
+import expiredTask from "../helpers/expiredTask.helper";
 
 export const createTask = async (
   id: string,
@@ -53,7 +54,6 @@ export const createTask = async (
       description: payload.description,
       start_date: payload.startDate,
       end_date: payload.endDate,
-      due_date: payload.dueDate,
       priority: payload.priority,
       size: taskSize,
     });
@@ -66,7 +66,6 @@ export const createTask = async (
       description: newTask.description,
       startDate: newTask.start_date.toISOString().split("T")[0],
       endDate: newTask.end_date.toISOString().split("T")[0],
-      dueDate: newTask.due_date.toISOString().split("T")[0],
       priority: newTask.priority,
       isCompleted: newTask.is_completed,
     });
@@ -139,10 +138,6 @@ export const updateTask = async (
       task.end_date = new Date(payload.endDate);
     }
 
-    if (payload.dueDate !== undefined) {
-      task.due_date = new Date(payload.dueDate);
-    }
-
     if (payload.priority !== undefined) {
       task.priority = payload.priority;
     }
@@ -156,7 +151,6 @@ export const updateTask = async (
       description: task.description,
       startDate: task.start_date.toISOString().split("T")[0],
       endDate: task.end_date.toISOString().split("T")[0],
-      dueDate: task.due_date.toISOString().split("T")[0],
       priority: task.priority as "low" | "medium" | "high",
       isCompleted: task.is_completed,
     });
@@ -226,11 +220,10 @@ export const getTask = async (
         endDate: task.end_date
           ? task.end_date.toISOString().split("T")[0]
           : null,
-        dueDate: task.due_date.toISOString().split("T")[0],
         priority: task.priority as "low" | "medium" | "high",
         isCompleted: task.is_completed,
         isExpired: task.end_date
-          ? task.end_date < new Date() && !task.is_completed
+          ? expiredTask(task.end_date, task.is_completed)
           : null,
       })),
       pagination: {
@@ -467,7 +460,6 @@ export const getTaskCompleted = async (
         endDate: task.end_date
           ? task.end_date.toISOString().split("T")[0]
           : null,
-        dueDate: task.due_date.toISOString().split("T")[0],
         priority: task.priority as "low" | "medium" | "high",
         isCompleted: task.is_completed,
       })),
@@ -543,11 +535,10 @@ export const getTaskPending = async (
         endDate: task.end_date
           ? task.end_date.toISOString().split("T")[0]
           : null,
-        dueDate: task.due_date.toISOString().split("T")[0],
         priority: task.priority as "low" | "medium" | "high",
         isCompleted: task.is_completed,
         isExpired: task.end_date
-          ? task.end_date < new Date() && !task.is_completed
+          ? expiredTask(task.end_date, task.is_completed)
           : null,
       })),
       pagination: {
@@ -600,11 +591,10 @@ export const taskDetail = async (
       endDate: taskFindId.end_date
         ? taskFindId.end_date.toISOString().split("T")[0]
         : null,
-      dueDate: taskFindId.due_date.toISOString().split("T")[0],
       priority: taskFindId.priority as "low" | "medium" | "high",
       isCompleted: taskFindId.is_completed,
       isExpired: taskFindId.end_date
-        ? taskFindId.end_date < new Date() && !taskFindId.is_completed
+        ? expiredTask(taskFindId.end_date, taskFindId.is_completed)
         : null,
     });
   } catch (error: any) {
@@ -673,7 +663,6 @@ export const getTaskTrash = async (
         endDate: task.end_date
           ? task.end_date.toISOString().split("T")[0]
           : null,
-        dueDate: task.due_date.toISOString().split("T")[0],
         priority: task.priority as "low" | "medium" | "high",
         isCompleted: task.is_completed,
       })),
