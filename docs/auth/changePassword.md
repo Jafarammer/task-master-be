@@ -1,4 +1,4 @@
-# REGISTER API SPEC
+# CHANGE PASSWORD API SPEC
 
 ## Endpoint : POST /api/auth/register
 
