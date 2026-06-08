@@ -1,6 +1,6 @@
 # CHANGE PASSWORD API SPEC
 
-## Endpoint : POST /api/auth/register
+## Endpoint : POST /api/auth/change-password
 
 ### Request Header:
 
