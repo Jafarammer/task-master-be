@@ -53,3 +53,11 @@ New password and confirm password not match
   }
 }
 ```
+
+### Internal Server Error (500)
+
+```json
+{
+  "message": "Internal server error"
+}
+```

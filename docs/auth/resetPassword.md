@@ -54,3 +54,11 @@ Link reset password expired
   "message": "Invalid reset token"
 }
 ```
+
+### Internal Server Error (500)
+
+```json
+{
+  "message": "Internal server error"
+}
+```
