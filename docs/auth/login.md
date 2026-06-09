@@ -30,6 +30,16 @@
 }
 ```
 
+#### Forbidden (403)
+
+Email has not been activated
+
+```json
+{
+  "message": "Please activate your account via email"
+}
+```
+
 ### Internal Server Error (500)
 
 ```json
