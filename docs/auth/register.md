@@ -29,14 +29,7 @@ Full name not filled in
 
 ```json
 {
-  "error": true,
-  "message": "fullName is required",
-  "errors": {
-    "formErrors": [],
-    "fieldErrors": {
-      "fullName": ["fullName is required"]
-    }
-  }
+  "message": "fullName is required"
 }
 ```
 
@@ -44,14 +37,7 @@ Incorrect email format or email not filled in
 
 ```json
 {
-  "error": true,
-  "message": "Email format not valid",
-  "errors": {
-    "formErrors": [],
-    "fieldErrors": {
-      "email": ["Email format not valid"]
-    }
-  }
+  "message": "Email format not valid"
 }
 ```
 
@@ -59,16 +45,7 @@ Password is invalid
 
 ```json
 {
-  "error": true,
-  "message": "Password must contain uppercase letters, lowercase letters, numbers, and special characters.",
-  "errors": {
-    "formErrors": [],
-    "fieldErrors": {
-      "password": [
-        "Password must contain uppercase letters, lowercase letters, numbers, and special characters."
-      ]
-    }
-  }
+  "message": "Password must contain uppercase letters, lowercase letters, numbers, and special characters."
 }
 ```
 
@@ -76,14 +53,7 @@ Password not match with confirm password
 
 ```json
 {
-  "error": true,
-  "message": "Password and confirm password not match",
-  "errors": {
-    "formErrors": [],
-    "fieldErrors": {
-      "confirmPassword": ["Password and confirm password not match"]
-    }
-  }
+  "message": "Password and confirm password not match"
 }
 ```
 

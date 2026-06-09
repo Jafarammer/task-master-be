@@ -26,14 +26,7 @@ Incorrect email format
 
 ```json
 {
-  "error": true,
-  "message": "Email format not valid",
-  "errors": {
-    "formErrors": [],
-    "fieldErrors": {
-      "email": ["Email format not valid"]
-    }
-  }
+  "message": "Email format not valid"
 }
 ```
 

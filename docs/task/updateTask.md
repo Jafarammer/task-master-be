@@ -1,6 +1,6 @@
-# POST TASK API SPEC
+# PATCH TASK API SPEC
 
-## Endpoint : POST /api/task
+## Endpoint : PATCH /api/task/:id
 
 ### Request Header:
 
@@ -22,7 +22,7 @@
 
 ```json
 {
-  "message": "Create task successfully"
+  "message": "Update task successfully"
 }
 ```
 
@@ -43,22 +43,6 @@ Description not filled in
 ```json
 {
   "message": "Description is required"
-}
-```
-
-Start Date is invalid
-
-```json
-{
-  "message": "Date cannot be earlier than today"
-}
-```
-
-End Date is invalid
-
-```json
-{
-  "message": "Date cannot be earlier than today"
 }
 ```
 

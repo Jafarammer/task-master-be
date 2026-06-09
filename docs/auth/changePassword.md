@@ -43,14 +43,7 @@ New password and confirm password not match
 
 ```json
 {
-  "error": true,
-  "message": "New password and confirm password not match",
-  "errors": {
-    "formErrors": [],
-    "fieldErrors": {
-      "confirmPassword": ["New password and confirm password not match"]
-    }
-  }
+  "message": "New password and confirm password not match"
 }
 ```
 

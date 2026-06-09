@@ -1,18 +1,29 @@
 import { z } from "zod";
 
-export const createTaskValidation = z.object({
-  title: z.string({ error: "Title is required" }),
-  description: z.string({ error: "Description is required" }),
-  startDate: z.coerce
-    .date({ error: "Start date is required" })
-    .min(new Date().setHours(0, 0, 0, 0), "Date cannot be earlier than today"),
-  endDate: z.coerce
-    .date({ error: "End date is required" })
-    .min(new Date().setHours(0, 0, 0, 0), "Date cannot be earlier than today"),
-  priority: z.enum(["low", "medium", "high"], {
-    error: "priority must be one of, low, medium, high ",
-  }),
-});
+export const createTaskValidation = z
+  .object({
+    title: z.string({ error: "Title is required" }),
+    description: z.string({ error: "Description is required" }),
+    startDate: z.coerce
+      .date({ error: "Start date is required" })
+      .min(
+        new Date().setHours(0, 0, 0, 0),
+        "Date cannot be earlier than today",
+      ),
+    endDate: z.coerce
+      .date({ error: "End date is required" })
+      .min(
+        new Date().setHours(0, 0, 0, 0),
+        "Date cannot be earlier than today",
+      ),
+    priority: z.enum(["low", "medium", "high"], {
+      error: "priority must be one of, low, medium, high ",
+    }),
+  })
+  .refine((data) => data.endDate >= data.startDate, {
+    message: "End date must be greater than start date",
+    path: ["endDate"],
+  });
 
 export const updateTaskValidation = z
   .object({

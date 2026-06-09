@@ -53,14 +53,7 @@ Full name not filled in
 
 ```json
 {
-  "error": true,
-  "message": "Full name is required",
-  "errors": {
-    "formErrors": [],
-    "fieldErrors": {
-      "fullName": ["Full name is required"]
-    }
-  }
+  "message": "Full name is required"
 }
 ```
 
@@ -68,14 +61,7 @@ Invalid email
 
 ```json
 {
-  "error": true,
-  "message": "Email format not valid",
-  "errors": {
-    "formErrors": [],
-    "fieldErrors": {
-      "email": ["Email format not valid"]
-    }
-  }
+  "message": "Email format not valid"
 }
 ```
 
