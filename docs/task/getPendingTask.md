@@ -1,6 +1,6 @@
-# GET ALL TASK API SPEC
+# GET PENDING TASK API SPEC
 
-## Endpoint : GET /api/task
+## Endpoint : GET /api/task/pending
 
 ### Request Header:
 
@@ -26,7 +26,7 @@
       "startDate": "2026-01-01",
       "endDate": "2026-06-01",
       "priority": "low | medium | high",
-      "isCompleted": true | false,
+      "isCompleted": false,
       "isExpired": true | false
     }
   ],
@@ -36,7 +36,7 @@
     "total": 5,
     "totalPages": 1
   },
-  "message": "Get task successfully"
+  "message": "Get task completed successfully"
 }
 ```
 

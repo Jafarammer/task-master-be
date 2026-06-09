@@ -14,7 +14,7 @@
 - order : asc | desc
 - query : string
 
-### Response Body Success (201) :
+### Response Body Success (200) :
 
 ```json
 {
