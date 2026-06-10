@@ -21,9 +21,8 @@ export const handleUpdateProfile = async (req: AuthRequest, res: Response) => {
   const validated = updateProfileValidation.safeParse(req.body);
   if (!validated.success) {
     return res.status(400).json({
-      error: true,
       message: validated.error.issues[0].message,
-      errors: validated.error.flatten(),
+      // errors: validated.error.flatten(),
     });
   }
   const result = await profileService.updateProfile(id, validated.data);
