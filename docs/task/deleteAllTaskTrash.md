@@ -1,6 +1,6 @@
-# HARD DELETE API SPEC
+# DELETE ALL TASK TRASH API SPEC
 
-## Endpoint : DELETE /api/task/hard/:taskId
+## End Point : DELETE /api/task/trash/all
 
 ### Request Header:
 
@@ -10,7 +10,7 @@
 
 ```json
 {
-  "message": "Task deleted successfully"
+  "message": "Trash emptied successfully"
 }
 ```
 
@@ -39,14 +39,6 @@ User not registered
 ```json
 {
   "message": "User not found"
-}
-```
-
-Task not found
-
-```json
-{
-  "message": "Task not found or already deleted"
 }
 ```
 
