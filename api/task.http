@@ -1,0 +1,105 @@
+@token = xxx
+@page = 1
+@limit = 5
+@sortBy = createdAt
+@order = desc
+@query = Tes
+@taskId = xxx
+
+### Create Task
+POST http://localhost:8000/api/task
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Test 1 xxxxx",
+  "description": "Desc 1 xxxxx",
+  "startDate": "2026-06-11",
+  "endDate": "2026-06-12",
+  "priority": "high"
+}
+
+### Read All Task
+GET  http://localhost:8000/api/task?page={{page}}&limit={{limit}}&order={{order}}
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Read Completed Task
+GET http://localhost:8000/api/task/completed?page={{page}}&limit={{limit}}&order={{order}}
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Read Pending Task
+GET http://localhost:8000/api/task/pending?page={{page}}&limit={{limit}}&order={{order}}
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Update Task
+PATCH http://localhost:8000/api/task/{{taskId}}
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "Test xxxxx",
+  "description": "Desc xxxxx",
+  "startDate": "2026-06-11",
+  "endDate": "2026-06-12",
+  "priority": "low"
+}
+
+### Soft Delete
+DELETE http://localhost:8000/api/task/soft/{{taskId}}
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Read Task Trash
+GET http://localhost:8000/api/task/trash?page={{page}}&limit={{limit}}&order={{order}}
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Restore Task
+PATCH http://localhost:8000/api/task/restore/{{taskId}}
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Update Status Task
+PATCH http://localhost:8000/api/task/status/{{taskId}}
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{token}}
+
+{
+  "isCompleted": true
+}
+
+### Detail Task
+GET http://localhost:8000/api/task/detail/{{taskId}}
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Read Task Trash Statistics
+GET http://localhost:8000/api/task/trash/statistics
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Hard Delete Task
+DELETE http://localhost:8000/api/task/hard/{{taskId}}
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Empty Trash
+DELETE http://localhost:8000/api/task/trash/all
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{token}}

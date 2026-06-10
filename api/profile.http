@@ -1,4 +1,4 @@
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhMjhiOGVmOWQ4NzQxZGJhYmJmMmZkOSIsImVtYWlsIjoidGVzdEBleGFtcGxlLmNvbSIsImlhdCI6MTc4MTA1NDQ2OCwiZXhwIjoxNzgxMTQwODY4fQ.3-Le2GEdos1f1Ci46ptHMKJoBR5_OVU6Wyiw9122nEc
+@token = xxxx
 
 ### GET Profile
 GET http://localhost:8000/api/profile
@@ -26,5 +26,5 @@ Content-Type: multipart/form-data; boundary=WebAppBoundary
 Content-Disposition: form-data; name="profilePicture"; filename="avatar.jpg"
 Content-Type: image/jpeg
 
-< ./avatar.jpg
+< ./files/avatar.jpg
 --WebAppBoundary--
