@@ -1,108 +1,127 @@
-# API Testing with REST Client
+# Task Master API
 
-This project uses the VS Code REST Client extension for manual API testing.
+RESTful API for task management built with Express.js, TypeScript, MongoDB, JWT Authentication, Cloudinary Upload, and Zod Validation.
 
-## Prerequisites
+## Features
 
-Install the REST Client extension in VS Code:
+- User Authentication (Register, Login)
+- JWT Authorization
+- Task Management (CRUD)
+- Profile Management
+- Profile Picture Upload
+- MongoDB Integration
+- Request Validation with Zod
+- Cloudinary Image Upload
 
-- Extension Name: REST Client
-- Publisher: Huachao Mao
+## Tech Stack
 
-## Setup
+- Node.js
+- Express.js
+- TypeScript
+- MongoDB
+- Mongoose
+- JWT
+- Multer
+- Cloudinary
+- Zod
 
-After cloning the repository:
+## Installation
+
+### Clone Repository
+
+```bash
+git clone <repository-url>
+cd task-master-be
+```
+
+### Install Dependencies
 
 ```bash
 npm install
-cp .env.example .env
+```
+
+### Environment Variables
+
+Create a `.env` file in the root directory.
+
+Example:
+
+```env
+PORT=8000
+
+MONGO_URI=
+
+JWT_SECRET=
+
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
+
+EMAIL_SMTP_SECURE=
+EMAIL_SMTP_PASS=
+EMAIL_SMTP_PORT=
+EMAIL_SMTP_HOST=
+EMAIL_SMTP_SERVICE_NAME=
+
+CLIENT_HOST=
+VERIFICATION_HOST=http://localhost:8000
+
+NODE_ENV=
+```
+
+### Run Development Server
+
+```bash
 npm run dev
 ```
 
-Make sure the API server is running before executing requests.
+### Build Project
 
-## HTTP Files
+```bash
+npm run build
+```
 
-API requests are located in the `http/` directory:
+### Run Production Build
+
+```bash
+npm start
+```
+
+## API Testing
+
+This project uses the VS Code REST Client extension for manual API testing.
+
+See:
 
 ```text
+REST_CLIENT.md
+```
+
+## Project Structure
+
+```text
+src/
+├── controllers/
+├── helpers/
+├── interfaces/
+├── middleware/
+├── models/
+├── routes/
+├── services/
+├── utils/
+└── validations/
+
 api/
 ├── auth.http
 ├── task.http
-├── profile.http
-└── files/
-    └── avatar.jpg
+└── profile.http
+
+docs/
+├── auth/
+├── profile/
+├── task/
 ```
 
-## Environment Variables
+## License
 
-Define variables at the top of each `.http` file:
-
-```http
-@baseUrl = http://localhost:8000/api
-@token = YOUR_JWT_TOKEN
-```
-
-## Execute Requests
-
-Open any `.http` file and click **Send Request** above the request.
-
-Example:
-
-```http
-### Get Tasks
-GET {{baseUrl}}/task?page=1&limit=10
-Authorization: Bearer {{token}}
-```
-
-## File Upload Testing
-
-Store test files inside the `files/` directory.
-
-Example:
-
-```http
-PATCH {{baseUrl}}/profile/picture
-Authorization: Bearer {{token}}
-Content-Type: multipart/form-data; boundary=WebAppBoundary
-
---WebAppBoundary
-Content-Disposition: form-data; name="profilePicture"; filename="avatar.jpg"
-Content-Type: image/jpeg
-
-< ./files/avatar.jpg
---WebAppBoundary--
-```
-
-The multipart field name must match the field configured in the NestJS FileInterceptor.
-
-Example:
-
-```ts
-@UseInterceptors(FileInterceptor('profilePicture'))
-```
-
-## Authentication Flow
-
-1. Execute Login request.
-2. Copy the returned access token.
-3. Paste the token into:
-
-```http
-@token = YOUR_ACCESS_TOKEN
-```
-
-4. Execute protected endpoints.
-
-## Notes
-
-- Do not commit real JWT tokens.
-- Do not commit production credentials.
-- Ensure the API server is running before testing requests.
-- Query parameters should be passed directly in the request URL.
-
-Example:
-
-```http
-GET {{baseUrl}}/task?page=1&limit=5&query=Test
-```
+ISC
