@@ -13,9 +13,8 @@ export const handleLogin = async (req: Request, res: Response) => {
   const validated = loginValidation.safeParse(req.body);
   if (!validated.success) {
     return res.status(400).json({
-      error: true,
       message: validated.error.issues[0].message,
-      errors: validated.error.flatten(),
+      // errors: validated.error.flatten(),
     });
   }
   const result = await authService.loginUser(validated.data);
@@ -33,9 +32,8 @@ export const handleRegister = async (req: Request, res: Response) => {
   const validated = registerValidation.safeParse(req.body);
   if (!validated.success) {
     return res.status(400).json({
-      error: true,
       message: validated.error.issues[0].message,
-      errors: validated.error.flatten(),
+      // errors: validated.error.flatten(),
     });
   }
 
@@ -74,9 +72,8 @@ export const handleChangePassword = async (req: AuthRequest, res: Response) => {
   const validated = changePasswordValidation.safeParse(req.body);
   if (!validated.success) {
     return res.status(400).json({
-      error: true,
       message: validated.error.issues[0].message,
-      errors: validated.error.flatten(),
+      // errors: validated.error.flatten(),
     });
   }
 
@@ -94,9 +91,8 @@ export const handleForgotPassword = async (req: Request, res: Response) => {
   const validated = forgotPasswordValidation.safeParse(req.body);
   if (!validated.success) {
     return res.status(400).json({
-      error: true,
       message: validated.error.issues[0].message,
-      errors: validated.error.flatten(),
+      // errors: validated.error.flatten(),
     });
   }
 
@@ -111,9 +107,8 @@ export const handleResetPassword = async (req: Request, res: Response) => {
   const validated = resetPasswordValidation.safeParse(req.body);
   if (!validated.success) {
     return res.status(400).json({
-      error: true,
       message: validated.error.issues[0].message,
-      errors: validated.error.flatten(),
+      // errors: validated.error.flatten(),
     });
   }
 
