@@ -1,0 +1,30 @@
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhMjhiOGVmOWQ4NzQxZGJhYmJmMmZkOSIsImVtYWlsIjoidGVzdEBleGFtcGxlLmNvbSIsImlhdCI6MTc4MTA1NDQ2OCwiZXhwIjoxNzgxMTQwODY4fQ.3-Le2GEdos1f1Ci46ptHMKJoBR5_OVU6Wyiw9122nEc
+
+### GET Profile
+GET http://localhost:8000/api/profile
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### Update Profile
+PATCH http://localhost:8000/api/profile
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{token}}
+
+{
+  "fullName": "Jhone Does",
+  "email": "test@example.com"
+}
+
+### Update Profile Picture
+PATCH http://localhost:8000/api/profile/picture
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="profilePicture"; filename="avatar.jpg"
+Content-Type: image/jpeg
+
+< ./avatar.jpg
+--WebAppBoundary--
