@@ -1,7 +1,7 @@
 import supertest from "supertest";
 import { logger } from "../src/app/logging";
 import web from "../src/app/web";
-import { createUser } from "./test-utils";
+import { createUserActive, createUserInactive } from "./test-utils";
 
 describe("Health Check", () => {
   it("should return OK", async () => {
@@ -79,7 +79,7 @@ describe("POST /api/auth/register", () => {
   });
 
   it("should register user is user registered", async () => {
-    await createUser();
+    await createUserActive();
     const response = await supertest(web).post("/api/auth/register").send({
       fullName: "Jhone Doe",
       email: "john@example.com",
@@ -89,5 +89,48 @@ describe("POST /api/auth/register", () => {
     logger.debug(response.body);
     expect(response.status).toBe(409);
     expect(response.body.message).toBe("Email already registered");
+  });
+});
+
+describe("POST /api/auth/login", () => {
+  it("should login successfully", async () => {
+    await createUserActive();
+    const response = await supertest(web).post("/api/auth/login").send({
+      email: "john@example.com",
+      password: "@Jhone123",
+    });
+
+    logger.debug(response.body);
+    expect(response.status).toBe(200);
+    expect(response.body.accessToken).toBeDefined();
+    expect(response.body.message).toBe("Welcome John Doe");
+  });
+
+  it("should login rejected is email or password is invalid", async () => {
+    await createUserActive();
+    const response = await supertest(web).post("/api/auth/login").send({
+      email: "johne@example.com",
+      password: "@Jhone321",
+    });
+
+    logger.debug(response.body);
+    expect(response.status).toBe(400);
+    expect(response.body.accessToken).toBeUndefined();
+    expect(response.body.message).toBe("Email or password is invalid");
+  });
+
+  it("should login rejected is email not activated", async () => {
+    await createUserInactive();
+    const response = await supertest(web).post("/api/auth/login").send({
+      email: "john@example.com",
+      password: "@Jhone123",
+    });
+
+    logger.debug(response.body);
+    expect(response.status).toBe(403);
+    expect(response.body.accessToken).toBeUndefined();
+    expect(response.body.message).toBe(
+      "Please activate your account via email",
+    );
   });
 });
