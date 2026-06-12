@@ -1,12 +1,13 @@
 import mongoose from "mongoose";
-import { MONGO_URI } from "../src/utils/env";
+import { MONGO_URI } from "../utils/env";
+import { logger } from "./logging";
 
 export const connectDB = async () => {
   try {
     await mongoose.connect(MONGO_URI as string);
-    console.info("✅ DB connected");
+    logger.info("DB connected");
   } catch (error) {
-    console.error("❌ DB connection failed", error);
+    logger.error("DB connection failed", error);
     process.exit(1);
   }
 };

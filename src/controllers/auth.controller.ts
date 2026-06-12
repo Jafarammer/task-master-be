@@ -25,7 +25,7 @@ export const handleLogin = async (req: Request, res: Response) => {
 
   return res
     .status(result.code)
-    .json({ accessToken: result.data.token, message: result.message });
+    .json({ accessToken: result.data!.token, message: result.message });
 };
 
 export const handleRegister = async (req: Request, res: Response) => {
@@ -51,9 +51,9 @@ export const activateAccount = async (req: Request, res: Response) => {
   const result = await authService.activateUser(code as string);
 
   if (result.error) {
-    return res.redirect(result.data.redirectUrl);
+    return res.redirect(result.data!.redirectUrl);
   }
-  return res.redirect(result.data.redirectUrl);
+  return res.redirect(result.data!.redirectUrl);
 };
 
 export const reActivateAccount = async (req: Request, res: Response) => {
@@ -62,13 +62,13 @@ export const reActivateAccount = async (req: Request, res: Response) => {
   const result = await authService.reActivateUser(code as string);
 
   if (result.error) {
-    return res.redirect(result.data.redirectUrl);
+    return res.redirect(result.data!.redirectUrl);
   }
-  return res.redirect(result.data.redirectUrl);
+  return res.redirect(result.data!.redirectUrl);
 };
 
 export const handleChangePassword = async (req: AuthRequest, res: Response) => {
-  const id = req.user.id;
+  const id = req.user!.id;
   const validated = changePasswordValidation.safeParse(req.body);
   if (!validated.success) {
     return res.status(400).json({

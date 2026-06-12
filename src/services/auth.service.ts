@@ -9,12 +9,9 @@ import {
 } from "../interfaces/auth.interface";
 import { IServiceResponse } from "../interfaces/common.interface";
 import { createAccessToken } from "../utils/tokens";
-import { sendMail, renderMailHtml } from "../utils/mail/mail";
-import {
-  sendMailForgotPassword,
-  renderForgotPasswordMailHtml,
-} from "../utils/mail/forgotPasswordMail";
-import { CLIENT_HOST, EMAIL_SMTP_USER, VERIFICATION_HOST } from "../utils/env";
+import sendRegistrationEmail from "../mail/sendRegistrationEmail";
+import sendForgotPasswordEmail from "../mail/sendForgotPasswordEmail";
+import { CLIENT_HOST, VERIFICATION_HOST } from "../utils/env";
 import validationId from "../helpers/validationId.helper";
 import {
   comparePassword,
@@ -77,18 +74,10 @@ export const registerUser = async (
 
     const activationLink = `${VERIFICATION_HOST}/api/auth/activate?code=${activationCode}`;
 
-    const contentMail = await renderMailHtml("registration-success.ejs", {
-      full_name: payload.fullName,
+    await sendRegistrationEmail({
+      fullName: payload.fullName,
       email: payload.email,
-      createdAt: new Date(),
       activationLink: activationLink,
-    });
-
-    await sendMail({
-      from: EMAIL_SMTP_USER,
-      to: payload.email,
-      subject: "Aktifkan Akun Anda",
-      html: contentMail,
     });
 
     const user = new User({
@@ -141,8 +130,19 @@ export const reActivateUser = async (
       redirectUrl: `${CLIENT_HOST}/login?status=error&message=${encodeURIComponent("Invalid activation account")}`,
     });
   }
+
+  const pendingEmail = user.pending_mail;
+
+  if (!pendingEmail) {
+    return errorResponse("No email change request found", 400, {
+      redirectUrl: `${CLIENT_HOST}/login?status=error&message=${encodeURIComponent(
+        "No email change request found",
+      )}`,
+    });
+  }
+
   user.is_active = true;
-  user.email = user.pending_mail;
+  user.email = pendingEmail;
   user.pending_mail = null;
   user.activationCode = null;
   await user.save();
@@ -218,15 +218,11 @@ export const forgotPassword = async (
     await user.save();
 
     const resetLink = `${CLIENT_HOST}/reset-password?token=${resetToken}`;
-    const contentMail = await renderForgotPasswordMailHtml(
-      "forgot-password-success.ejs",
-      { full_name: user.full_name, resetLink },
-    );
-    await sendMailForgotPassword({
-      from: EMAIL_SMTP_USER,
-      to: user.email,
-      subject: "Reset Your Password",
-      html: contentMail,
+
+    await sendForgotPasswordEmail({
+      fullName: user.full_name,
+      email: user.email,
+      resetLink: resetLink,
     });
 
     return successResponse("Reset password email sent", 201);

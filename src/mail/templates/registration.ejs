@@ -1,11 +1,10 @@
 <!DOCTYPE html>
-<html lang="id">
+
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-    <title>TASK MASTER — Reset Password</title>
-
+    <title>TASK MASTER — Account Activation</title>
     <style>
       body {
         margin: 0;
@@ -45,6 +44,12 @@
         letter-spacing: 1px;
       }
 
+      .subtitle {
+        margin: 4px 0 0;
+        font-size: 13px;
+        opacity: 0.9;
+      }
+
       .content {
         padding: 28px;
         color: #333;
@@ -54,6 +59,7 @@
       .greeting {
         font-size: 18px;
         font-weight: 600;
+        margin-top: 0;
       }
 
       .info-box {
@@ -65,9 +71,13 @@
       }
 
       .info-item {
-        margin-bottom: 6px;
+        margin-bottom: 8px;
         font-size: 14px;
         color: #555;
+      }
+
+      .info-item:last-child {
+        margin-bottom: 0;
       }
 
       .info-item strong {
@@ -81,7 +91,7 @@
 
       .cta-button {
         background: linear-gradient(135deg, #00c853, #64dd17);
-        color: white !important;
+        color: #ffffff !important;
         text-decoration: none;
         padding: 14px 28px;
         border-radius: 999px;
@@ -91,13 +101,15 @@
         box-shadow: 0 6px 16px rgba(0, 200, 83, 0.4);
       }
 
-      .cta-button:hover {
-        opacity: 0.9;
-      }
-
       .note {
         font-size: 13px;
         color: #777;
+      }
+
+      .link {
+        font-size: 12px;
+        word-break: break-all;
+        color: #444;
       }
 
       .footer {
@@ -130,49 +142,60 @@
       <div class="card">
         <div class="header">
           <div class="logo">TASK MASTER</div>
-
-          <p style="margin: 4px 0 0; font-size: 13px; opacity: 0.9">
-            Reset Password
-          </p>
+          <p class="subtitle">Account Activation</p>
         </div>
 
         <div class="content">
-          <p class="greeting">Halo <%= full_name %>,</p>
+          <p class="greeting">Hello <%= full_name %>,</p>
 
           <p>
-            Kami menerima permintaan untuk mereset password akun
-            <strong>TASK MASTER</strong> kamu.
+            Thank you for joining
+            <strong>TASK MASTER</strong>. To start using your account, please
+            verify your email address by clicking the button below.
           </p>
 
           <div class="info-box">
             <div class="info-item">
-              Klik tombol di bawah untuk membuat password baru.
+              <strong>Full Name:</strong>
+              <%= full_name %>
             </div>
 
             <div class="info-item">
-              Link ini hanya berlaku selama
-              <strong> 5 menit </strong>.
+              <strong>Email Address:</strong>
+              <%= email %>
+            </div>
+
+            <div class="info-item">
+              <strong>Registration Date:</strong>
+              <%= createdAt %>
             </div>
           </div>
 
           <div class="cta-wrapper">
-            <a href="<%= resetLink %>" class="cta-button">
-              🔐 Reset Password
+            <a href="<%= activationLink %>" class="cta-button">
+              Activate Account
             </a>
           </div>
 
           <p class="note">
-            Jika tombol tidak bekerja, copy & paste link berikut ke browser:
+            If the button above does not work, copy and paste the following link
+            into your browser:
           </p>
 
-          <p style="font-size: 12px; word-break: break-all"><%= resetLink %></p>
+          <p class="link"><%= activationLink %></p>
 
-          <p class="warning">
-            Jika kamu tidak meminta reset password, abaikan email ini.
+          <p class="note">
+            If you did not create a TASK MASTER account, you can safely ignore
+            this email.
+          </p>
+
+          <p>
+            Best regards,<br />
+            <strong>TASK MASTER Team</strong>
           </p>
         </div>
 
-        <div class="footer">&copy; 2026 TASK MASTER — All rights reserved</div>
+        <div class="footer">&copy; 2026 TASK MASTER. All rights reserved.</div>
       </div>
     </div>
   </body>

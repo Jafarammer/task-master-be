@@ -2,25 +2,23 @@ import express, { Application } from "express";
 import morgan from "morgan";
 import cors from "cors";
 import helmet from "helmet";
-import { CLIENT_HOST } from "./src/utils/env";
+import { CLIENT_HOST } from "../utils/env";
 
-import authRoutes from "./src/routes/auth.routes";
-import profileRoutes from "./src/routes/profile.routes";
-import taskRoutes from "./src/routes/task.routes";
+// routes
+import authRoutes from "../routes/auth.routes";
+import profileRoutes from "../routes/profile.routes";
+import taskRoutes from "../routes/task.routes";
 
-const app: Application = express();
+const web: Application = express();
 
-// Security first
-app.use(helmet());
-
-// Middleware
-app.use(express.json());
+web.use(helmet());
+web.use(express.json());
 
 const allowedOrigins = ["http://localhost:5173", CLIENT_HOST].filter(
   Boolean,
 ) as string[];
 
-app.use(
+web.use(
   cors({
     origin: function (origin, callback) {
       if (!origin) return callback(null, true);
@@ -34,16 +32,15 @@ app.use(
   }),
 );
 
-app.use(morgan("dev"));
+web.use(morgan("dev"));
 
-// Routes
-app.use("/api/auth", authRoutes);
-app.use("/api/profile", profileRoutes);
-app.use("/api/task", taskRoutes);
+web.use("/api/auth", authRoutes);
+web.use("/api/profile", profileRoutes);
+web.use("/api/task", taskRoutes);
 
 // Health check (Render cek ini)
-app.get("/health", (_req, res) => {
+web.get("/health", (_req, res) => {
   res.json({ status: "OK" });
 });
 
-export default app;
+export default web;

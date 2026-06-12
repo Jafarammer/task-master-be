@@ -9,7 +9,7 @@ import {
 import parseQueryParams from "../helpers/query.helper";
 
 export const handleCreateTask = async (req: AuthRequest, res: Response) => {
-  const userId = req.user?.id;
+  const userId = req.user!.id;
   const validated = createTaskValidation.safeParse(req.body);
   if (!validated.success) {
     return res.status(400).json({
@@ -31,7 +31,7 @@ export const handleCreateTask = async (req: AuthRequest, res: Response) => {
 
 export const handleUpdateTask = async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  const user_id = req.user?.id;
+  const user_id = req.user!.id;
   const validated = updateTaskValidation.safeParse(req.body);
   if (!validated.success) {
     return res.status(400).json({
@@ -50,7 +50,7 @@ export const handleUpdateTask = async (req: AuthRequest, res: Response) => {
 };
 
 export const handleGetTask = async (req: AuthRequest, res: Response) => {
-  const user_id: string = req.user?.id;
+  const user_id: string = req.user!.id;
   const params = parseQueryParams(req.query);
 
   const result = await taskService.getTask(user_id, params);
@@ -60,14 +60,14 @@ export const handleGetTask = async (req: AuthRequest, res: Response) => {
   }
 
   return res.status(result.code).json({
-    data: result.data.tasks,
-    metaData: result.data.pagination,
+    data: result.data!.tasks,
+    metaData: result.data!.pagination,
     message: result.message,
   });
 };
 
 export const handleSoftDeleteTask = async (req: AuthRequest, res: Response) => {
-  const userId = req.user?.id;
+  const userId = req.user!.id;
   const { taskId } = req.params;
 
   const result = await taskService.softDeleteTask(userId, taskId);
@@ -82,7 +82,7 @@ export const handleSoftDeleteTask = async (req: AuthRequest, res: Response) => {
 };
 
 export const handleHardDeleteTask = async (req: AuthRequest, res: Response) => {
-  const userId = req.user?.id;
+  const userId = req.user!.id;
   const { taskId } = req.params;
 
   const result = await taskService.hardDeleteTask(userId, taskId);
@@ -95,7 +95,7 @@ export const handleHardDeleteTask = async (req: AuthRequest, res: Response) => {
 };
 
 export const handleRestoreTask = async (req: AuthRequest, res: Response) => {
-  const userId = req.user?.id;
+  const userId = req.user!.id;
   const { taskId } = req.params;
 
   const result = await taskService.restoreTask(userId, taskId);
@@ -111,7 +111,7 @@ export const handleTaskUpdateStatus = async (
   req: AuthRequest,
   res: Response,
 ) => {
-  const userId = req.user.id;
+  const userId = req.user!.id;
   const { taskId } = req.params;
   const validated = updateStatusTaskValidation.safeParse(req.body);
   if (!validated.success) {
@@ -138,7 +138,7 @@ export const handleGetTaskCompleted = async (
   req: AuthRequest,
   res: Response,
 ) => {
-  const userId = req.user.id;
+  const userId = req.user!.id;
   const params = parseQueryParams(req.query);
 
   const result = await taskService.getTaskCompleted(userId, params);
@@ -148,14 +148,14 @@ export const handleGetTaskCompleted = async (
   }
 
   return res.status(result.code).json({
-    data: result.data.tasks,
-    metaData: result.data.pagination,
+    data: result.data!.tasks,
+    metaData: result.data!.pagination,
     message: result.message,
   });
 };
 
 export const handleGetTaskPending = async (req: AuthRequest, res: Response) => {
-  const userId = req.user.id;
+  const userId = req.user!.id;
   const params = parseQueryParams(req.query);
 
   const result = await taskService.getTaskPending(userId, params);
@@ -165,14 +165,14 @@ export const handleGetTaskPending = async (req: AuthRequest, res: Response) => {
   }
 
   return res.status(result.code).json({
-    data: result.data.tasks,
-    metaData: result.data.pagination,
+    data: result.data!.tasks,
+    metaData: result.data!.pagination,
     message: result.message,
   });
 };
 
 export const handleGetDetailTask = async (req: AuthRequest, res: Response) => {
-  const userId = req.user?.id;
+  const userId = req.user!.id;
   const taskId = req.params.id;
   const result = await taskService.taskDetail(userId, taskId);
   if (result.error) {
@@ -185,7 +185,7 @@ export const handleGetDetailTask = async (req: AuthRequest, res: Response) => {
 };
 
 export const handleGetTaskTrash = async (req: AuthRequest, res: Response) => {
-  const userId = req.user.id;
+  const userId = req.user!.id;
   const params = parseQueryParams(req.query);
 
   const result = await taskService.getTaskTrash(userId, params);
@@ -195,8 +195,8 @@ export const handleGetTaskTrash = async (req: AuthRequest, res: Response) => {
   }
 
   return res.status(result.code).json({
-    data: result.data.tasks,
-    metaData: result.data.pagination,
+    data: result.data!.tasks,
+    metaData: result.data!.pagination,
     message: result.message,
   });
 };
@@ -205,7 +205,7 @@ export const handleGetTrashStatistics = async (
   req: AuthRequest,
   res: Response,
 ) => {
-  const userId = req.user.id;
+  const userId = req.user!.id;
   const result = await taskService.getTrashStatistics(userId);
 
   if (result.error) {
@@ -221,7 +221,7 @@ export const handleDeleteAllTaskTrash = async (
   req: AuthRequest,
   res: Response,
 ) => {
-  const userId = req.user.id;
+  const userId = req.user!.id;
   const result = await taskService.deleteAllTaskTrash(userId);
 
   if (result.error) {

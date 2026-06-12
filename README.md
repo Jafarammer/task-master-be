@@ -101,6 +101,7 @@ REST_CLIENT.md
 
 ```text
 src/
+├── app/
 ├── controllers/
 ├── helpers/
 ├── interfaces/

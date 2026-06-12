@@ -7,7 +7,9 @@ import {
   EMAIL_SMTP_PORT,
   EMAIL_SMTP_USER,
   EMAIL_SMTP_PASS,
-} from "../env";
+} from "../utils/env";
+import { logger } from "../app/logging";
+import { ISendMail } from "../interfaces/mail.interface";
 
 const transporter = nodemailer.createTransport({
   host: EMAIL_SMTP_HOST,
@@ -19,41 +21,33 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-transporter
-  .verify()
-  .then(() => console.log("✅ SMTP REGISTRATION READY"))
-  .catch((err) => console.error("❌ SMTP REGISTRATION FAIL:", err.message));
+export const verifySMTP = async (): Promise<void> => {
+  try {
+    await transporter.verify();
+    logger.info("SMTP READY");
+  } catch (error) {
+    logger.error("SMTP ERROR", error);
+  }
+};
 
-export interface ISendMail {
-  from: string;
-  to: string;
-  subject: string;
-  html: string;
-}
-
-export const sendMail = async ({ ...mailParams }: ISendMail) => {
-  return await transporter.sendMail(mailParams);
+export const sendMail = async (mailParams: ISendMail): Promise<void> => {
+  await transporter.sendMail(mailParams);
 };
 
 export const renderMailHtml = async (
   template: string,
-  data: any,
+  data: Record<string, any>,
 ): Promise<string> => {
   const basePath =
     process.env.NODE_ENV === "production"
-      ? path.resolve(
-          process.cwd(),
-          "dist/src/utils/mail/templates/registration",
-        )
-      : path.resolve(process.cwd(), "src/utils/mail/templates/registration");
+      ? path.resolve(process.cwd(), "dist/src/mail/templates")
+      : path.resolve(process.cwd(), "src/mail/templates");
 
   const templatePath = path.join(basePath, template);
-
-  console.log("📨 EJS TEMPLATE PATH:", templatePath);
 
   if (!fs.existsSync(templatePath)) {
     throw new Error(`EJS TEMPLATE NOT FOUND: ${templatePath}`);
   }
 
-  return await ejs.renderFile(templatePath, data);
+  return ejs.renderFile(templatePath, data);
 };

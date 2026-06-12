@@ -23,7 +23,7 @@ Make sure the API server is running before executing requests.
 
 ## HTTP Files
 
-API requests are located in the `http/` directory:
+API requests are located in the `api/` directory:
 
 ```text
 api/
@@ -57,7 +57,7 @@ Authorization: Bearer {{token}}
 
 ## File Upload Testing
 
-Store test files inside the `files/` directory.
+Store test files inside the `api/files/` directory.
 
 Example:
 
@@ -74,17 +74,17 @@ Content-Type: image/jpeg
 --WebAppBoundary--
 ```
 
-The multipart field name must match the field configured in the NestJS FileInterceptor.
+The multipart field name must match the field configured in the Express/Multer upload middleware.
 
 Example:
 
 ```ts
-@UseInterceptors(FileInterceptor('profilePicture'))
+upload.single("profilePicture");
 ```
 
 ## Authentication Flow
 
-1. Execute Login request.
+1. Execute the Login request.
 2. Copy the returned access token.
 3. Paste the token into:
 
@@ -106,3 +106,15 @@ Example:
 ```http
 GET {{baseUrl}}/task?page=1&limit=5&query=Test
 ```
+
+## Tech Stack
+
+- MongoDB
+- Express.js
+- React.js
+- Node.js
+- TypeScript
+- Mongoose
+- JWT Authentication
+- Cloudinary (File Uploads)
+- REST Client (API Testing)

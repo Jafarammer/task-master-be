@@ -6,6 +6,6 @@ export interface IUpdateProfilePayload {
 export interface IResultDataProfile {
   fullName: string;
   email: string;
-  profilePicture: string;
+  profilePicture: string | null;
   requireRelogin?: boolean;
 }

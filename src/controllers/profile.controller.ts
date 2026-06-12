@@ -4,7 +4,7 @@ import { AuthRequest } from "../middleware/authMiddleware";
 import { updateProfileValidation } from "../validations/profile.validate";
 
 export const handleGetProfile = async (req: AuthRequest, res: Response) => {
-  const id = req.user?.id;
+  const id = req.user!.id;
   const result = await profileService.getProfile(id);
   if (result.error) {
     return res.status(result.code).json({ message: result.message });
@@ -17,7 +17,7 @@ export const handleGetProfile = async (req: AuthRequest, res: Response) => {
 };
 
 export const handleUpdateProfile = async (req: AuthRequest, res: Response) => {
-  const id = req.user?.id;
+  const id = req.user!.id;
   const validated = updateProfileValidation.safeParse(req.body);
   if (!validated.success) {
     return res.status(400).json({
@@ -40,7 +40,7 @@ export const handleUpdateProfilePicture = async (
   req: AuthRequest,
   res: Response,
 ) => {
-  const id = req.user.id;
+  const id = req.user!.id;
   const result = await profileService.updateProfilePicture(id, req.file);
   if (result.error) {
     return res.status(result.code).json({ message: result.message });

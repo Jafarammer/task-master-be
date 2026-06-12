@@ -1,21 +1,18 @@
 import mongoose from "mongoose";
-import { MongoMemoryServer } from "mongodb-memory-server";
-
-let mongoServer: MongoMemoryServer;
+import { connectDB } from "../src/app/database";
 
 beforeAll(async () => {
-  mongoServer = await MongoMemoryServer.create();
-  await mongoose.connect(mongoServer.getUri());
-});
-
-afterAll(async () => {
-  await mongoose.connection.close();
-  await mongoServer.stop();
+  await connectDB();
 });
 
 afterEach(async () => {
   const collections = mongoose.connection.collections;
+
   for (const key in collections) {
     await collections[key].deleteMany({});
   }
+});
+
+afterAll(async () => {
+  await mongoose.disconnect();
 });

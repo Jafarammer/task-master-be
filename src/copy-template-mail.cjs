@@ -1,8 +1,8 @@
 const fs = require("fs");
 const path = require("path");
 
-const src = path.join(__dirname, "src/utils/mail/templates");
-const dest = path.join(__dirname, "dist/src/utils/mail/templates");
+const src = path.join(__dirname, "mail/templates");
+const dest = path.join(__dirname, "../dist/mail/templates");
 
 function copyDir(srcDir, destDir) {
   if (!fs.existsSync(srcDir)) {

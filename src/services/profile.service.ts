@@ -3,12 +3,12 @@ import crypto from "crypto";
 import streamifier from "streamifier";
 import cloudinary from "../utils/cloudinary";
 import { IServiceResponse } from "../interfaces/common.interface";
-import { renderVerifyMailHtml, sendMail } from "../utils/mail/reverifyMail";
+import sendReverifyEmail from "../mail/sendReverifyEmail";
 import {
   IUpdateProfilePayload,
   IResultDataProfile,
 } from "../interfaces/profile.interface";
-import { EMAIL_SMTP_USER, VERIFICATION_HOST } from "../utils/env";
+import { VERIFICATION_HOST } from "../utils/env";
 import { successResponse, errorResponse } from "../helpers/response.helper";
 import validationId from "../helpers/validationId.helper";
 
@@ -34,7 +34,7 @@ export const getProfile = async (
     return successResponse("Fetch profile successfully", 200, {
       fullName: userFindId.full_name,
       email: userFindId.email,
-      profilePicture: userFindId.profile_picture,
+      profilePicture: userFindId.profile_picture ?? null,
     });
   } catch (error: any) {
     return { error: true, code: 500, message: "Internal server error" };
@@ -81,18 +81,11 @@ export const updateProfile = async (
       user.is_active = false;
       user.refreshToken = null;
 
-      const contentMail = await renderVerifyMailHtml("reverify-success.ejs", {
-        full_name: user.full_name,
-        current_email: user.email,
-        new_email: payload.email.trim(),
-        verificationLink,
-      });
-
-      await sendMail({
-        from: EMAIL_SMTP_USER,
-        to: payload.email.trim(),
-        subject: "Verify Your New Email Address",
-        html: contentMail,
+      await sendReverifyEmail({
+        fullName: user.full_name,
+        currentEmail: user.email,
+        newEmail: payload.email.trim(),
+        verificationLink: verificationLink,
       });
     }
 
@@ -106,7 +99,7 @@ export const updateProfile = async (
       {
         fullName: user.full_name,
         email: user.email,
-        profilePicture: user.profile_picture,
+        profilePicture: user.profile_picture ?? null,
         requireRelogin: isEmailChanged,
       },
     );
@@ -156,7 +149,7 @@ export const updateProfilePicture = async (
     return successResponse("Profile picture updated successfully", 201, {
       fullName: user.full_name,
       email: user.email,
-      profilePicture: user.profile_picture,
+      profilePicture: user.profile_picture ?? null,
     });
   } catch (error: any) {
     console.error("UPDATE PROFILE PICTURE ERROR:", error);

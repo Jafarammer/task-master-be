@@ -14,8 +14,8 @@ export interface IResultDataTask {
   id: string;
   title: string;
   description: string;
-  startDate: string;
-  endDate: string;
+  startDate: string | null;
+  endDate: string | null;
   priority: "low" | "medium" | "high";
   isCompleted: boolean;
   isExpired?: boolean | null;

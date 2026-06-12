@@ -1,24 +1,24 @@
 import dotenv from "dotenv";
+import {
+  getEnvString,
+  getEnvNumber,
+  getEnvBoolean,
+} from "../helpers/getEnv.helper";
 
 dotenv.config();
 
-export const PORT = process.env.PORT;
-export const MONGO_URI = process.env.MONGO_URI;
-export const JWT_SECRET = process.env.JWT_SECRET;
-export const EMAIL_SMTP_SECURE: boolean =
-  Boolean(process.env.EMAIL_SMTP_SECURE) || false;
-export const EMAIL_SMTP_PASS: string = process.env.EMAIL_SMTP_PASS || "";
-export const EMAIL_SMTP_USER: string = process.env.EMAIL_SMTP_USER || "";
-export const EMAIL_SMTP_PORT: number =
-  Number(process.env.EMAIL_SMTP_PORT) || 465;
-export const EMAIL_SMTP_HOST: string = process.env.EMAIL_SMTP_HOST || "";
-export const EMAIL_SMTP_SERVICE_NAME: string =
-  process.env.EMAIL_SMTP_SERVICE_NAME || "";
-export const CLIENT_HOST: string =
-  process.env.CLIENT_HOST || "http://localhost:5173";
-export const VERIFICATION_HOST =
-  process.env.VERIFICATION_HOST || "http://localhost:8000";
-export const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
-export const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY;
-export const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET;
-export const NODE_ENV = process.env.NODE_ENV || "development";
+export const PORT = getEnvNumber("PORT");
+export const MONGO_URI = getEnvString("MONGO_URI");
+export const JWT_SECRET = getEnvString("JWT_SECRET");
+export const EMAIL_SMTP_SECURE = getEnvBoolean("EMAIL_SMTP_SECURE");
+export const EMAIL_SMTP_PASS = getEnvString("EMAIL_SMTP_PASS");
+export const EMAIL_SMTP_USER = getEnvString("EMAIL_SMTP_USER");
+export const EMAIL_SMTP_PORT = getEnvNumber("EMAIL_SMTP_PORT");
+export const EMAIL_SMTP_HOST = getEnvString("EMAIL_SMTP_HOST");
+export const EMAIL_SMTP_SERVICE_NAME = getEnvString("EMAIL_SMTP_SERVICE_NAME");
+export const CLIENT_HOST = getEnvString("CLIENT_HOST");
+export const VERIFICATION_HOST = getEnvString("VERIFICATION_HOST");
+export const CLOUDINARY_CLOUD_NAME = getEnvString("CLOUDINARY_CLOUD_NAME");
+export const CLOUDINARY_API_KEY = getEnvString("CLOUDINARY_API_KEY");
+export const CLOUDINARY_API_SECRET = getEnvString("CLOUDINARY_API_SECRET");
+export const NODE_ENV = getEnvString("NODE_ENV");

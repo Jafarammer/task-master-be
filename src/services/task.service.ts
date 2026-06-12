@@ -64,8 +64,8 @@ export const createTask = async (
       id: newTask.id,
       title: newTask.title,
       description: newTask.description,
-      startDate: newTask.start_date.toISOString().split("T")[0],
-      endDate: newTask.end_date.toISOString().split("T")[0],
+      startDate: newTask.start_date?.toISOString().split("T")[0] ?? null,
+      endDate: newTask.end_date?.toISOString().split("T")[0] ?? null,
       priority: newTask.priority,
       isCompleted: newTask.is_completed,
     });
@@ -149,8 +149,8 @@ export const updateTask = async (
       id: id,
       title: task.title,
       description: task.description,
-      startDate: task.start_date.toISOString().split("T")[0],
-      endDate: task.end_date.toISOString().split("T")[0],
+      startDate: task.start_date?.toISOString().split("T")[0] ?? null,
+      endDate: task.end_date?.toISOString().split("T")[0] ?? null,
       priority: task.priority as "low" | "medium" | "high",
       isCompleted: task.is_completed,
     });
@@ -214,12 +214,8 @@ export const getTask = async (
         id: task.id,
         title: task.title,
         description: task.description,
-        startDate: task.start_date
-          ? task.start_date.toISOString().split("T")[0]
-          : null,
-        endDate: task.end_date
-          ? task.end_date.toISOString().split("T")[0]
-          : null,
+        startDate: task.start_date?.toISOString().split("T")[0] ?? null,
+        endDate: task.end_date?.toISOString().split("T")[0] ?? null,
         priority: task.priority as "low" | "medium" | "high",
         isCompleted: task.is_completed,
         isExpired: task.end_date
@@ -454,12 +450,8 @@ export const getTaskCompleted = async (
         id: task.id,
         title: task.title,
         description: task.description,
-        startDate: task.start_date
-          ? task.start_date.toISOString().split("T")[0]
-          : null,
-        endDate: task.end_date
-          ? task.end_date.toISOString().split("T")[0]
-          : null,
+        startDate: task.start_date?.toISOString().split("T")[0] ?? null,
+        endDate: task.end_date?.toISOString().split("T")[0] ?? null,
         priority: task.priority as "low" | "medium" | "high",
         isCompleted: task.is_completed,
       })),
@@ -529,12 +521,8 @@ export const getTaskPending = async (
         id: task.id,
         title: task.title,
         description: task.description,
-        startDate: task.start_date
-          ? task.start_date.toISOString().split("T")[0]
-          : null,
-        endDate: task.end_date
-          ? task.end_date.toISOString().split("T")[0]
-          : null,
+        startDate: task.start_date?.toISOString().split("T")[0] ?? null,
+        endDate: task.end_date?.toISOString().split("T")[0] ?? null,
         priority: task.priority as "low" | "medium" | "high",
         isCompleted: task.is_completed,
         isExpired: task.end_date
@@ -585,12 +573,8 @@ export const taskDetail = async (
       id: taskFindId.id,
       title: taskFindId.title,
       description: taskFindId.description,
-      startDate: taskFindId.start_date
-        ? taskFindId.start_date.toISOString().split("T")[0]
-        : null,
-      endDate: taskFindId.end_date
-        ? taskFindId.end_date.toISOString().split("T")[0]
-        : null,
+      startDate: taskFindId.start_date?.toISOString().split("T")[0] ?? null,
+      endDate: taskFindId.end_date?.toISOString().split("T")[0] ?? null,
       priority: taskFindId.priority as "low" | "medium" | "high",
       isCompleted: taskFindId.is_completed,
       isExpired: taskFindId.end_date
@@ -657,12 +641,8 @@ export const getTaskTrash = async (
         id: task.id,
         title: task.title,
         description: task.description,
-        startDate: task.start_date
-          ? task.start_date.toISOString().split("T")[0]
-          : null,
-        endDate: task.end_date
-          ? task.end_date.toISOString().split("T")[0]
-          : null,
+        startDate: task.start_date?.toISOString().split("T")[0] ?? null,
+        endDate: task.end_date?.toISOString().split("T")[0] ?? null,
         priority: task.priority as "low" | "medium" | "high",
         isCompleted: task.is_completed,
       })),
