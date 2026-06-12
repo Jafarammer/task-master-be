@@ -134,3 +134,44 @@ describe("POST /api/auth/login", () => {
     );
   });
 });
+
+describe("POST /api/auth/forgot-password", () => {
+  beforeEach(async () => {
+    await createUserActive();
+  });
+  it("should forgot password successfully", async () => {
+    const response = await supertest(web)
+      .post("/api/auth/forgot-password")
+      .send({
+        email: "john@example.com",
+      });
+
+    logger.debug(response.body);
+    expect(response.status).toBe(201);
+    expect(response.body.message).toBe("Reset password email sent");
+  });
+
+  it("should forgot password email is invalid", async () => {
+    const response = await supertest(web)
+      .post("/api/auth/forgot-password")
+      .send({
+        email: "john@example",
+      });
+
+    logger.debug(response.body);
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe("Email format not valid");
+  });
+
+  it("should forgot password user is not found", async () => {
+    const response = await supertest(web)
+      .post("/api/auth/forgot-password")
+      .send({
+        email: "johneee@example.com",
+      });
+
+    logger.debug(response.body);
+    expect(response.status).toBe(404);
+    expect(response.body.message).toBe("User not found");
+  });
+});
