@@ -1,7 +1,7 @@
 import supertest from "supertest";
 import { logger } from "../src/app/logging";
 import web from "../src/app/web";
-import { createUserActive, createUserInactive } from "./test-utils";
+import { createUserActive, createUserInactive, loginUser } from "./test-utils";
 
 describe("Health Check", () => {
   it("should return OK", async () => {
@@ -173,5 +173,62 @@ describe("POST /api/auth/forgot-password", () => {
     logger.debug(response.body);
     expect(response.status).toBe(404);
     expect(response.body.message).toBe("User not found");
+  });
+});
+
+describe("PATCH /api/auth/change-password", () => {
+  let token: string;
+
+  beforeEach(async () => {
+    const login = await loginUser();
+    token = login.token;
+  });
+
+  it("should change password successfully", async () => {
+    const response = await supertest(web)
+      .patch("/api/auth/change-password")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        currentPassword: "@Jhone123",
+        newPassword: "@Jhondoe321",
+        confirmPassword: "@Jhondoe321",
+      });
+
+    logger.debug(response.body);
+    expect(response.status).toBe(201);
+    expect(response.body.message).toBe("Password changed successfully");
+    expect(response.body.data.requireRelogin).toBe(true);
+  });
+
+  it("should change password is currentPassword incorect", async () => {
+    const response = await supertest(web)
+      .patch("/api/auth/change-password")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        currentPassword: "@Jhone1234",
+        newPassword: "@Jhondoe321",
+        confirmPassword: "@Jhondoe321",
+      });
+
+    logger.debug(response.body);
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe("Current password is incorrect");
+  });
+
+  it.only("should change password is new password and confirm password not match", async () => {
+    const response = await supertest(web)
+      .patch("/api/auth/change-password")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        currentPassword: "@Jhone123",
+        newPassword: "@Jhondoe321",
+        confirmPassword: "@Jhondoe3212",
+      });
+
+    logger.debug(response.body);
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe(
+      "New password and confirm password not match",
+    );
   });
 });
