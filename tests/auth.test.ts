@@ -1,7 +1,14 @@
+import User from "../src/models/user.model";
 import supertest from "supertest";
 import { logger } from "../src/app/logging";
 import web from "../src/app/web";
-import { createUserActive, createUserInactive, loginUser } from "./test-utils";
+import {
+  createUserActive,
+  createUserInactive,
+  loginUser,
+  userResetToken,
+  userResetTokenExpired,
+} from "./test-utils";
 
 describe("Health Check", () => {
   it("should return OK", async () => {
@@ -215,7 +222,7 @@ describe("PATCH /api/auth/change-password", () => {
     expect(response.body.message).toBe("Current password is incorrect");
   });
 
-  it.only("should change password is new password and confirm password not match", async () => {
+  it("should change password is new password and confirm password not match", async () => {
     const response = await supertest(web)
       .patch("/api/auth/change-password")
       .set("Authorization", `Bearer ${token}`)
@@ -223,6 +230,110 @@ describe("PATCH /api/auth/change-password", () => {
         currentPassword: "@Jhone123",
         newPassword: "@Jhondoe321",
         confirmPassword: "@Jhondoe3212",
+      });
+
+    logger.debug(response.body);
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe(
+      "New password and confirm password not match",
+    );
+  });
+});
+
+describe("POST /api/auth/reset-password", () => {
+  it("should reset password successfully", async () => {
+    const user = await userResetToken();
+
+    const response = await supertest(web)
+      .post("/api/auth/reset-password")
+      .send({
+        token: user.token,
+        newPassword: "@Jhone321",
+        confirmPassword: "@Jhone321",
+      });
+
+    logger.debug(response.body);
+    expect(response.status).toBe(201);
+    expect(response.body.message).toBe("Password reset successfully");
+  });
+
+  it("should reset password expired", async () => {
+    const user = await userResetTokenExpired();
+
+    const response = await supertest(web)
+      .post("/api/auth/reset-password")
+      .send({
+        token: user.reset_password_token,
+        newPassword: "@Jhone321",
+        confirmPassword: "@Jhone321",
+      });
+
+    logger.debug(response.body);
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe("Reset password expired");
+  });
+
+  it("should reset password token is invalid", async () => {
+    await userResetToken();
+
+    const response = await supertest(web)
+      .post("/api/auth/reset-password")
+      .send({
+        token: "xxxxxxxx",
+        newPassword: "@Jhone321",
+        confirmPassword: "@Jhone321",
+      });
+
+    logger.debug(response.body);
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe("Invalid reset token");
+  });
+
+  it("should reset password current password is same new password", async () => {
+    const user = await userResetToken();
+
+    const response = await supertest(web)
+      .post("/api/auth/reset-password")
+      .send({
+        token: user.token,
+        newPassword: "OldPassword123!",
+        confirmPassword: "OldPassword123!",
+      });
+
+    logger.debug(response.body);
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe(
+      "New password cannot be the same as current password",
+    );
+  });
+
+  it("should reset password is invalid", async () => {
+    const user = await userResetToken();
+
+    const response = await supertest(web)
+      .post("/api/auth/reset-password")
+      .send({
+        token: user.token,
+        newPassword: "12345678",
+        confirmPassword: "12345678",
+      });
+
+    logger.debug(response.body);
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe(
+      "Password must contain uppercase letters, lowercase letters, numbers, and special characters.",
+    );
+  });
+
+  it("should reset password, new password and confirm password not match", async () => {
+    const user = await userResetToken();
+
+    const response = await supertest(web)
+      .post("/api/auth/reset-password")
+      .send({
+        token: user.token,
+        newPassword: "@Jhone321",
+        confirmPassword: "@Jhone123",
       });
 
     logger.debug(response.body);

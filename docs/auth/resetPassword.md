@@ -44,7 +44,7 @@ Link reset password expired
 
 ```json
 {
-  "message": "Invalid reset token"
+  "message": "Reset password expired"
 }
 ```
 
@@ -53,6 +53,14 @@ Password is invalid
 ```json
 {
   "message": "Password must contain uppercase letters, lowercase letters, numbers, and special characters."
+}
+```
+
+Token reset password is invalid
+
+```json
+{
+  "message": "Invalid reset token"
 }
 ```
 

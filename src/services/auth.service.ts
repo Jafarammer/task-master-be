@@ -252,7 +252,7 @@ export const resetPassword = async (
       user.reset_password_token = null;
       user.reset_password_expired = null;
       await user.save();
-      return errorResponse("Reset token expired", 400);
+      return errorResponse("Reset password expired", 400);
     }
 
     const isSamePassword = await comparePassword(newPassword, user.password);
