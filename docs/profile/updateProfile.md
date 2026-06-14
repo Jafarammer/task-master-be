@@ -65,6 +65,14 @@ Invalid email
 }
 ```
 
+Token is missing
+
+```json
+{
+  "message": "Unauthorized"
+}
+```
+
 #### Forbidden (403)
 
 Invalid token
