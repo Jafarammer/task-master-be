@@ -1,4 +1,3 @@
-import User from "../src/models/user.model";
 import supertest from "supertest";
 import { logger } from "../src/app/logging";
 import web from "../src/app/web";

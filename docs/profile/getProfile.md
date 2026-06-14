@@ -21,6 +21,16 @@
 
 ### Error Response:
 
+#### Unauthorized (401)
+
+Token is missing
+
+```json
+{
+  "message": "Unauthorized"
+}
+```
+
 #### Forbidden (403)
 
 Invalid token

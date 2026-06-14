@@ -1,4 +1,5 @@
 import User from "../src/models/user.model";
+import { Types } from "mongoose";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { createAccessToken } from "../src/utils/tokens";
@@ -64,4 +65,8 @@ export const userResetTokenExpired = async () => {
     reset_password_token: "token123",
     reset_password_expired: new Date(Date.now() - 1000),
   });
+};
+
+export const deleteUser = async (userId: string | Types.ObjectId) => {
+  return await User.findByIdAndDelete(userId);
 };
