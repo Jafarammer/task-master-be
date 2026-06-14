@@ -1,8 +1,10 @@
 import User from "../src/models/user.model";
+import Task from "../src/models/task.model";
 import { Types } from "mongoose";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { createAccessToken } from "../src/utils/tokens";
+import { calculateTaskSize } from "../src/helpers/storage.helper";
 
 export const createUserActive = async () => {
   return await User.create({
@@ -69,4 +71,21 @@ export const userResetTokenExpired = async () => {
 
 export const deleteUser = async (userId: string | Types.ObjectId) => {
   return await User.findByIdAndDelete(userId);
+};
+
+export const createTask = async (userId: string | Types.ObjectId) => {
+  const taskSize = calculateTaskSize({
+    title: "Test title",
+    description: "Test description",
+  });
+
+  return Task.create({
+    user_id: userId,
+    title: "Test title",
+    description: "Test description",
+    start_date: "2026-06-23",
+    end_date: "2026-06-23",
+    priority: "low",
+    size: taskSize,
+  });
 };

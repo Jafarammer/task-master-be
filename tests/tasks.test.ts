@@ -1,7 +1,7 @@
 import supertest from "supertest";
 import { logger } from "../src/app/logging";
 import web from "../src/app/web";
-import { loginUser } from "./test-utils";
+import { loginUser, createTask } from "./test-utils";
 
 describe("POST /api/task", () => {
   let token: string;
@@ -142,5 +142,133 @@ describe("POST /api/task", () => {
     logger.debug(response.body);
     expect(response.status).toBe(403);
     expect(response.body.message).toBe("Invalid or expired token");
+  });
+});
+
+describe("GET /api/task", () => {
+  let token: string;
+  let user: any;
+
+  beforeEach(async () => {
+    const login = await loginUser();
+    token = login.token;
+    user = login.user;
+    await createTask(user._id);
+  });
+
+  it("should be able get task successfully", async () => {
+    const response = await supertest(web)
+      .get("/api/task")
+      .set("Authorization", `Bearer ${token}`);
+
+    logger.debug(response.body);
+    expect(user._id).toBeDefined();
+    expect(response.status).toBe(200);
+    expect(response.body.data.length).toBe(1);
+    expect(response.body.metaData.page).toBe(1);
+    expect(response.body.metaData.limit).toBe(5);
+    expect(response.body.metaData.total).toBe(1);
+    expect(response.body.metaData.totalPages).toBe(1);
+    expect(response.body.message).toBe("Get task successfully");
+  });
+
+  it("should be able search task using title", async () => {
+    const response = await supertest(web)
+      .get("/api/task")
+      .set("Authorization", `Bearer ${token}`)
+      .query({
+        query: "Test",
+      });
+
+    logger.debug(response.body);
+    expect(user._id).toBeDefined();
+    expect(response.status).toBe(200);
+    expect(response.body.data.length).toBe(1);
+    expect(response.body.metaData.page).toBe(1);
+    expect(response.body.metaData.limit).toBe(5);
+    expect(response.body.metaData.total).toBe(1);
+    expect(response.body.metaData.totalPages).toBe(1);
+    expect(response.body.message).toBe("Get task successfully");
+  });
+
+  it("should be able search task using description", async () => {
+    const response = await supertest(web)
+      .get("/api/task")
+      .set("Authorization", `Bearer ${token}`)
+      .query({
+        query: "description",
+      });
+
+    logger.debug(response.body);
+    expect(user._id).toBeDefined();
+    expect(response.status).toBe(200);
+    expect(response.body.data.length).toBe(1);
+    expect(response.body.metaData.page).toBe(1);
+    expect(response.body.metaData.limit).toBe(5);
+    expect(response.body.metaData.total).toBe(1);
+    expect(response.body.metaData.totalPages).toBe(1);
+    expect(response.body.message).toBe("Get task successfully");
+  });
+
+  it("should be able search task no result", async () => {
+    const response = await supertest(web)
+      .get("/api/task")
+      .set("Authorization", `Bearer ${token}`)
+      .query({
+        query: "halooooo",
+      });
+
+    logger.debug(response.body);
+    expect(user._id).toBeDefined();
+    expect(response.status).toBe(200);
+    expect(response.body.data.length).toBe(0);
+    expect(response.body.metaData.page).toBe(1);
+    expect(response.body.metaData.limit).toBe(5);
+    expect(response.body.metaData.total).toBe(0);
+    expect(response.body.metaData.totalPages).toBe(0);
+    expect(response.body.message).toBe("Get task successfully");
+  });
+
+  it("should be able get task with paging & limit", async () => {
+    const response = await supertest(web)
+      .get("/api/task")
+      .set("Authorization", `Bearer ${token}`)
+      .query({
+        page: 2,
+        limit: 5,
+      });
+
+    logger.debug(response.body);
+    expect(user._id).toBeDefined();
+    expect(response.status).toBe(200);
+    expect(response.body.data.length).toBe(0);
+    expect(response.body.metaData.page).toBe(2);
+    expect(response.body.metaData.limit).toBe(5);
+    expect(response.body.metaData.total).toBe(1);
+    expect(response.body.metaData.totalPages).toBe(1);
+    expect(response.body.message).toBe("Get task successfully");
+  });
+
+  it("should be able get task with all params", async () => {
+    const response = await supertest(web)
+      .get("/api/task")
+      .set("Authorization", `Bearer ${token}`)
+      .query({
+        page: 1,
+        limit: 5,
+        sortBy: "createdAt",
+        order: "desc",
+        query: "Tes",
+      });
+
+    logger.debug(response.body);
+    expect(user._id).toBeDefined();
+    expect(response.status).toBe(200);
+    expect(response.body.data.length).toBe(1);
+    expect(response.body.metaData.page).toBe(1);
+    expect(response.body.metaData.limit).toBe(5);
+    expect(response.body.metaData.total).toBe(1);
+    expect(response.body.metaData.totalPages).toBe(1);
+    expect(response.body.message).toBe("Get task successfully");
   });
 });
