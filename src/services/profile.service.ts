@@ -1,13 +1,12 @@
 import User from "../models/user.model";
 import crypto from "crypto";
-import streamifier from "streamifier";
-import cloudinary from "../utils/cloudinary";
 import { IServiceResponse } from "../interfaces/common.interface";
 import sendReverifyEmail from "../mail/sendReverifyEmail";
 import {
   IUpdateProfilePayload,
   IResultDataProfile,
 } from "../interfaces/profile.interface";
+import { uploadImageToCloudinary } from "../utils/uploadImage";
 import { VERIFICATION_HOST } from "../utils/env";
 import { successResponse, errorResponse } from "../helpers/response.helper";
 import validationId from "../helpers/validationId.helper";
@@ -128,19 +127,7 @@ export const updateProfilePicture = async (
       return errorResponse("User not found", 404);
     }
 
-    const uploadResult = await new Promise<any>((resolve, reject) => {
-      const stream = cloudinary.uploader.upload_stream(
-        {
-          folder: "task-master/profile",
-          resource_type: "image",
-        },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
-        },
-      );
-      streamifier.createReadStream(file.buffer).pipe(stream);
-    });
+    const uploadResult = await uploadImageToCloudinary(file);
 
     user.profile_picture = uploadResult.secure_url;
 

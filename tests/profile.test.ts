@@ -2,6 +2,9 @@ import supertest from "supertest";
 import { logger } from "../src/app/logging";
 import web from "../src/app/web";
 import { loginUser, deleteUser } from "./test-utils";
+import { uploadImageToCloudinary } from "../src/utils/uploadImage";
+
+jest.mock("../src/utils/uploadImage");
 
 describe("GET /api/profile", () => {
   let token: string;
@@ -136,5 +139,47 @@ describe("PATCH /api/profile", () => {
     expect(response.status).toBe(400);
     expect(user._id).toBeDefined();
     expect(response.body.message).toBe("Email format not valid");
+  });
+});
+
+describe("PATCH /api/profile/picture", () => {
+  let token: string;
+  let user: any;
+
+  beforeEach(async () => {
+    const login = await loginUser();
+    token = login.token;
+    user = login.user;
+  });
+
+  it("should update profile picture successfully", async () => {
+    (uploadImageToCloudinary as jest.Mock).mockResolvedValue({
+      secure_url: "MOCK_URL",
+    });
+
+    const response = await supertest(web)
+      .patch("/api/profile/picture")
+      .set("Authorization", `Bearer ${token}`)
+      .attach("profilePicture", "tests/avatar.jpg");
+
+    logger.debug(response.body);
+    expect(response.status).toBe(201);
+    expect(user._id).toBeDefined();
+    expect(response.body.message).toBe("Profile picture updated successfully");
+  });
+
+  it("should update profile picture rejected", async () => {
+    (uploadImageToCloudinary as jest.Mock).mockResolvedValue({
+      secure_url: "MOCK_URL",
+    });
+
+    const response = await supertest(web)
+      .patch("/api/profile/picture")
+      .set("Authorization", `Bearer ${token}`)
+      .attach("profilePicture", "");
+
+    logger.debug(response.body);
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe("Profile picture is required");
   });
 });
