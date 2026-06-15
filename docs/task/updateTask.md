@@ -80,6 +80,14 @@ User not registered
 }
 ```
 
+Task not created
+
+```json
+{
+  "message": "Task not found"
+}
+```
+
 ### Internal Server Error (500)
 
 ```json

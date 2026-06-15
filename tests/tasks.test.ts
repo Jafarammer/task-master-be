@@ -272,3 +272,117 @@ describe("GET /api/task", () => {
     expect(response.body.message).toBe("Get task successfully");
   });
 });
+
+describe("PATCH /api/task/:id", () => {
+  let token: string;
+  let user: any;
+
+  beforeEach(async () => {
+    const login = await loginUser();
+    token = login.token;
+    user = login.user;
+  });
+
+  it("should be able update task", async () => {
+    const task = await createTask(user._id);
+    const response = await supertest(web)
+      .patch(`/api/task/${task._id}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        title: "Update task",
+        description: "xxxxx",
+        startDate: "2026-06-23",
+        endDate: "2026-06-23",
+        priority: "low",
+      });
+
+    logger.debug(response.body);
+    expect(response.status).toBe(201);
+    expect(user._id).toBeDefined();
+    expect(task._id).toBeDefined();
+    expect(response.body.message).toBe("Update task successfully");
+  });
+
+  it("should reject update task when title is missing", async () => {
+    const task = await createTask(user._id);
+    const response = await supertest(web)
+      .patch(`/api/task/${task._id}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        title: null,
+        description: "xxxxx",
+        startDate: "2026-06-23",
+        endDate: "2026-06-23",
+        priority: "low",
+      });
+
+    logger.debug(response.body);
+    expect(response.status).toBe(400);
+    expect(user._id).toBeDefined();
+    expect(task._id).toBeDefined();
+    expect(response.body.message).toBe("Title is required");
+  });
+
+  it("should reject update task when description is missing", async () => {
+    const task = await createTask(user._id);
+    const response = await supertest(web)
+      .patch(`/api/task/${task._id}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        title: "Test",
+        description: null,
+        startDate: "2026-06-23",
+        endDate: "2026-06-23",
+        priority: "low",
+      });
+
+    logger.debug(response.body);
+    expect(response.status).toBe(400);
+    expect(user._id).toBeDefined();
+    expect(task._id).toBeDefined();
+    expect(response.body.message).toBe("Description is required");
+  });
+
+  it("should reject update task when end date is greater than start date", async () => {
+    const task = await createTask(user._id);
+    const response = await supertest(web)
+      .patch(`/api/task/${task._id}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        title: "Test",
+        description: "Desc",
+        startDate: "2026-06-23",
+        endDate: "2026-06-22",
+        priority: "low",
+      });
+
+    logger.debug(response.body);
+    expect(response.status).toBe(400);
+    expect(user._id).toBeDefined();
+    expect(task._id).toBeDefined();
+    expect(response.body.message).toBe(
+      "End date must be greater than start date",
+    );
+  });
+
+  it("should reject update task when task id is not found", async () => {
+    const task = await createTask(user._id);
+    const taskInvalid: string = "6a2f425976e63529cea304c9";
+    const response = await supertest(web)
+      .patch(`/api/task/${taskInvalid}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        title: "Test",
+        description: "Desc",
+        startDate: "2026-06-23",
+        endDate: "2026-06-23",
+        priority: "low",
+      });
+
+    logger.debug(response.body);
+    expect(response.status).toBe(404);
+    expect(user._id).toBeDefined();
+    expect(task._id).toBeDefined();
+    expect(response.body.message).toBe("Task not found");
+  });
+});
