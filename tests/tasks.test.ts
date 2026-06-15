@@ -1,7 +1,7 @@
 import supertest from "supertest";
 import { logger } from "../src/app/logging";
 import web from "../src/app/web";
-import { loginUser, createTask } from "./test-utils";
+import { loginUser, createTask, softDeleteTask } from "./test-utils";
 
 describe("POST /api/task", () => {
   let token: string;
@@ -529,5 +529,60 @@ describe("GET /api/task/detail/:id", () => {
     expect(user._id).toBeDefined();
     expect(task._id).toBeDefined;
     expect(response.body.message).toBe("Task not found");
+  });
+});
+
+describe("PATCH /api/task/restore/:taskId", () => {
+  let token: string;
+  let user: any;
+  const taskIdInvalid: string = "6a2f425976e63529cea304c9";
+
+  beforeEach(async () => {
+    const login = await loginUser();
+    token = login.token;
+    user = login.user;
+  });
+
+  it("should be able restore task", async () => {
+    const task = await createTask(user._id);
+    await softDeleteTask(task.id);
+
+    const response = await supertest(web)
+      .patch(`/api/task/restore/${task.id}`)
+      .set("Authorization", `Bearer ${token}`);
+
+    logger.debug(response.body);
+    expect(response.status).toBe(201);
+    expect(user._id).toBeDefined();
+    expect(task.id).toBeDefined();
+    expect(response.body.message).toBe("Task restored successfully");
+  });
+
+  it("should rejected restore task when task not removed", async () => {
+    const task = await createTask(user._id);
+
+    const response = await supertest(web)
+      .patch(`/api/task/restore/${task.id}`)
+      .set("Authorization", `Bearer ${token}`);
+
+    logger.debug(response.body);
+    expect(response.status).toBe(404);
+    expect(user._id).toBeDefined();
+    expect(task.id).toBeDefined();
+    expect(response.body.message).toBe("Task not found or not deleted");
+  });
+
+  it("should rejected restore task when task id is invalid", async () => {
+    const task = await createTask(user._id);
+    await softDeleteTask(task.id);
+    const response = await supertest(web)
+      .patch(`/api/task/restore/${taskIdInvalid}`)
+      .set("Authorization", `Bearer ${token}`);
+
+    logger.debug(response.body);
+    expect(response.status).toBe(404);
+    expect(user._id).toBeDefined();
+    expect(task.id).toBeDefined();
+    expect(response.body.message).toBe("Task not found or not deleted");
   });
 });
