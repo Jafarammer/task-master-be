@@ -386,3 +386,41 @@ describe("PATCH /api/task/:id", () => {
     expect(response.body.message).toBe("Task not found");
   });
 });
+
+describe.only("DELETE /api/task/soft/:id", () => {
+  let token: string;
+  let user: any;
+  const taskInvalid: string = "6a2f425976e63529cea304c9";
+
+  beforeEach(async () => {
+    const login = await loginUser();
+    token = login.token;
+    user = login.user;
+  });
+
+  it("should be able soft delete task", async () => {
+    const task = await createTask(user._id);
+    const response = await supertest(web)
+      .delete(`/api/task/soft/${task._id}`)
+      .set("Authorization", `Bearer ${token}`);
+
+    logger.debug(response.body);
+    expect(response.status).toBe(201);
+    expect(user._id).toBeDefined();
+    expect(task._id).toBeDefined();
+    expect(response.body.message).toBe("Task moved to trash successfully");
+  });
+
+  it("should be able soft delete task when task id is invalid", async () => {
+    const task = await createTask(user._id);
+    const response = await supertest(web)
+      .delete(`/api/task/soft/${taskInvalid}`)
+      .set("Authorization", `Bearer ${token}`);
+
+    logger.debug(response.body);
+    expect(response.status).toBe(400);
+    expect(user._id).toBeDefined();
+    expect(task._id).toBeDefined();
+    expect(response.body.message).toBe("Task not found or already deleted");
+  });
+});
