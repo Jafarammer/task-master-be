@@ -586,3 +586,123 @@ describe("PATCH /api/task/restore/:taskId", () => {
     expect(response.body.message).toBe("Task not found or not deleted");
   });
 });
+
+describe("GET /api/task/trash", () => {
+  let token: string;
+  let user: any;
+
+  beforeEach(async () => {
+    const login = await loginUser();
+    token = login.token;
+    user = login.user;
+    const task = await createTask(user._id);
+    await softDeleteTask(task.id);
+  });
+
+  it("should be able get task trash", async () => {
+    const response = await supertest(web)
+      .get("/api/task/trash")
+      .set("Authorization", `Bearer ${token}`);
+
+    logger.debug(response.body);
+    expect(response.status).toBe(200);
+    expect(user._id).toBeDefined();
+    expect(response.body.data.length).toBe(1);
+    expect(response.body.metaData.page).toBe(1);
+    expect(response.body.metaData.limit).toBe(5);
+    expect(response.body.metaData.total).toBe(1);
+    expect(response.body.metaData.totalPages).toBe(1);
+    expect(response.body.message).toBe("Get task trash successfully");
+  });
+
+  it("should be able search task trash using title", async () => {
+    const response = await supertest(web)
+      .get("/api/task/trash")
+      .query({ query: "Tes" })
+      .set("Authorization", `Bearer ${token}`);
+
+    logger.debug(response.body);
+    expect(response.status).toBe(200);
+    expect(user._id).toBeDefined();
+    expect(response.body.data.length).toBe(1);
+    expect(response.body.metaData.page).toBe(1);
+    expect(response.body.metaData.limit).toBe(5);
+    expect(response.body.metaData.total).toBe(1);
+    expect(response.body.metaData.totalPages).toBe(1);
+    expect(response.body.message).toBe("Get task trash successfully");
+  });
+
+  it("should be able search task trash using description", async () => {
+    const response = await supertest(web)
+      .get("/api/task/trash")
+      .query({ query: "desc" })
+      .set("Authorization", `Bearer ${token}`);
+
+    logger.debug(response.body);
+    expect(response.status).toBe(200);
+    expect(user._id).toBeDefined();
+    expect(response.body.data.length).toBe(1);
+    expect(response.body.metaData.page).toBe(1);
+    expect(response.body.metaData.limit).toBe(5);
+    expect(response.body.metaData.total).toBe(1);
+    expect(response.body.metaData.totalPages).toBe(1);
+    expect(response.body.message).toBe("Get task trash successfully");
+  });
+
+  it("should be able search task trash no result", async () => {
+    const response = await supertest(web)
+      .get("/api/task/trash")
+      .query({ query: "halooooo" })
+      .set("Authorization", `Bearer ${token}`);
+
+    logger.debug(response.body);
+    expect(response.status).toBe(200);
+    expect(user._id).toBeDefined();
+    expect(response.body.data.length).toBe(0);
+    expect(response.body.metaData.page).toBe(1);
+    expect(response.body.metaData.limit).toBe(5);
+    expect(response.body.metaData.total).toBe(0);
+    expect(response.body.metaData.totalPages).toBe(0);
+    expect(response.body.message).toBe("Get task trash successfully");
+  });
+
+  it("should be able search task trash using paging & limit", async () => {
+    const response = await supertest(web)
+      .get("/api/task/trash")
+      .query({ page: 2, limit: 5 })
+      .set("Authorization", `Bearer ${token}`);
+
+    logger.debug(response.body);
+    expect(response.status).toBe(200);
+    expect(user._id).toBeDefined();
+    expect(response.body.data.length).toBe(0);
+    expect(response.body.metaData.page).toBe(2);
+    expect(response.body.metaData.limit).toBe(5);
+    expect(response.body.metaData.total).toBe(1);
+    expect(response.body.metaData.totalPages).toBe(1);
+    expect(response.body.message).toBe("Get task trash successfully");
+  });
+
+  it("should be able search task trash using all params", async () => {
+    const response = await supertest(web)
+      .get("/api/task/trash")
+      .query({
+        page: 1,
+        limit: 5,
+        sortBy: "createdAt",
+        order: "desc",
+        query: "Tes",
+      })
+      .set("Authorization", `Bearer ${token}`);
+
+    logger.debug(response.body);
+    expect(response.status).toBe(200);
+    expect(user._id).toBeDefined();
+    expect(response.body.data.length).toBe(1);
+    expect(response.body.metaData.page).toBe(1);
+    expect(response.body.metaData.limit).toBe(5);
+    expect(response.body.metaData.total).toBe(1);
+    expect(response.body.metaData.totalPages).toBe(1);
+    expect(response.body.message).toBe("Get task trash successfully");
+  });
+});
