@@ -387,7 +387,7 @@ describe("PATCH /api/task/:id", () => {
   });
 });
 
-describe.only("DELETE /api/task/soft/:id", () => {
+describe("DELETE /api/task/soft/:id", () => {
   let token: string;
   let user: any;
   const taskInvalid: string = "6a2f425976e63529cea304c9";
@@ -422,5 +422,65 @@ describe.only("DELETE /api/task/soft/:id", () => {
     expect(user._id).toBeDefined();
     expect(task._id).toBeDefined();
     expect(response.body.message).toBe("Task not found or already deleted");
+  });
+});
+
+describe("PATCH /api/task/status/:taskId", () => {
+  let token: string;
+  let user: any;
+  const taskIdInvalid: string = "6a2f425976e63529cea304c9";
+
+  beforeEach(async () => {
+    const login = await loginUser();
+    token = login.token;
+    user = login.user;
+  });
+
+  it("should be able update status task", async () => {
+    const task = await createTask(user._id);
+    const response = await supertest(web)
+      .patch(`/api/task/status/${task._id}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        isCompleted: true,
+      });
+
+    logger.debug(response.body);
+    expect(response.status).toBe(201);
+    expect(user._id).toBeDefined();
+    expect(task._id).toBeDefined();
+    expect(response.body.message).toBe("Task status updated successfully");
+  });
+
+  it("should be able update status task when task id is invalid", async () => {
+    const task = await createTask(user._id);
+    const response = await supertest(web)
+      .patch(`/api/task/status/${taskIdInvalid}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        isCompleted: true,
+      });
+
+    logger.debug(response.body);
+    expect(response.status).toBe(404);
+    expect(user._id).toBeDefined();
+    expect(task._id).toBeDefined();
+    expect(response.body.message).toBe("Task not found");
+  });
+
+  it("should be able update status task when status send not boolean", async () => {
+    const task = await createTask(user._id);
+    const response = await supertest(web)
+      .patch(`/api/task/status/${task._id}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        isCompleted: "xxxx",
+      });
+
+    logger.debug(response.body);
+    expect(response.status).toBe(400);
+    expect(user._id).toBeDefined();
+    expect(task._id).toBeDefined();
+    expect(response.body.message).toBe("Status must be true or false");
   });
 });

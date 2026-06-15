@@ -18,11 +18,21 @@
 
 ```json
 {
-  "message": "Create task successfully"
+  "message": "Task status updated successfully"
 }
 ```
 
 ### Error Response:
+
+#### Bad Request (400)
+
+Status is send not boolean
+
+```json
+{
+  "message": "Status must be true or false"
+}
+```
 
 #### Unauthorized (401)
 
