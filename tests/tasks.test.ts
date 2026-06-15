@@ -484,3 +484,50 @@ describe("PATCH /api/task/status/:taskId", () => {
     expect(response.body.message).toBe("Status must be true or false");
   });
 });
+
+describe("GET /api/task/detail/:id", () => {
+  let token: string;
+  let user: any;
+  const taskIdInvalid: string = "6a2f425976e63529cea304c9";
+
+  beforeEach(async () => {
+    const login = await loginUser();
+    token = login.token;
+    user = login.user;
+  });
+
+  it("should be able get task detail", async () => {
+    const task = await createTask(user._id);
+    const response = await supertest(web)
+      .get(`/api/task/detail/${task._id}`)
+      .set("Authorization", `Bearer ${token}`);
+
+    logger.debug(response.body);
+    expect(response.status).toBe(200);
+    expect(user._id).toBeDefined();
+    expect(response.body.data.id).toBe(task.id);
+    expect(response.body.data.description).toBe(task.description);
+    expect(response.body.data.startDate).toBe(
+      task.start_date?.toISOString().split("T")[0],
+    );
+    expect(response.body.data.endDate).toBe(
+      task.end_date?.toISOString().split("T")[0],
+    );
+    expect(response.body.data.priority).toBe(task.priority);
+    expect(response.body.data.isCompleted).toBe(task.is_completed);
+    expect(response.body.data.isExpired).toBe(false);
+  });
+
+  it("should rejected get task detail when task id is invalid", async () => {
+    const task = await createTask(user._id);
+    const response = await supertest(web)
+      .get(`/api/task/detail/${taskIdInvalid}`)
+      .set("Authorization", `Bearer ${token}`);
+
+    logger.debug(response.body);
+    expect(response.status).toBe(404);
+    expect(user._id).toBeDefined();
+    expect(task._id).toBeDefined;
+    expect(response.body.message).toBe("Task not found");
+  });
+});
