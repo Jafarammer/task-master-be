@@ -1,7 +1,12 @@
 import supertest from "supertest";
 import { logger } from "../src/app/logging";
 import web from "../src/app/web";
-import { loginUser, createTask, softDeleteTask } from "./test-utils";
+import {
+  loginUser,
+  createTask,
+  softDeleteTask,
+  updateStatusTask,
+} from "./test-utils";
 
 describe("POST /api/task", () => {
   let token: string;
@@ -704,5 +709,150 @@ describe("GET /api/task/trash", () => {
     expect(response.body.metaData.total).toBe(1);
     expect(response.body.metaData.totalPages).toBe(1);
     expect(response.body.message).toBe("Get task trash successfully");
+  });
+});
+
+describe("GET /api/task/completed", () => {
+  let token: string;
+  let user: any;
+
+  beforeEach(async () => {
+    const login = await loginUser();
+    token = login.token;
+    user = login.user;
+  });
+
+  it("should be able get task completed", async () => {
+    const task = await createTask(user._id);
+    await updateStatusTask(task.id);
+
+    const response = await supertest(web)
+      .get("/api/task/completed")
+      .set("Authorization", `Bearer ${token}`);
+
+    logger.debug(response.body);
+    expect(user._id).toBeDefined();
+    expect(task.id).toBeDefined();
+    expect(response.status).toBe(200);
+    expect(response.body.data.length).toBe(1);
+    expect(response.body.metaData.page).toBe(1);
+    expect(response.body.metaData.limit).toBe(5);
+    expect(response.body.metaData.total).toBe(1);
+    expect(response.body.metaData.totalPages).toBe(1);
+  });
+
+  it("should be able search task completed using title", async () => {
+    const task = await createTask(user._id);
+    await updateStatusTask(task.id);
+
+    const response = await supertest(web)
+      .get("/api/task/completed")
+      .set("Authorization", `Bearer ${token}`)
+      .query({
+        query: "Tes",
+      });
+
+    logger.debug(response.body);
+    expect(user._id).toBeDefined();
+    expect(task.id).toBeDefined();
+    expect(response.status).toBe(200);
+    expect(response.body.data.length).toBe(1);
+    expect(response.body.metaData.page).toBe(1);
+    expect(response.body.metaData.limit).toBe(5);
+    expect(response.body.metaData.total).toBe(1);
+    expect(response.body.metaData.totalPages).toBe(1);
+  });
+
+  it("should be able search task completed using description", async () => {
+    const task = await createTask(user._id);
+    await updateStatusTask(task.id);
+
+    const response = await supertest(web)
+      .get("/api/task/completed")
+      .set("Authorization", `Bearer ${token}`)
+      .query({
+        query: "Tes",
+      });
+
+    logger.debug(response.body);
+    expect(user._id).toBeDefined();
+    expect(task.id).toBeDefined();
+    expect(response.status).toBe(200);
+    expect(response.body.data.length).toBe(1);
+    expect(response.body.metaData.page).toBe(1);
+    expect(response.body.metaData.limit).toBe(5);
+    expect(response.body.metaData.total).toBe(1);
+    expect(response.body.metaData.totalPages).toBe(1);
+  });
+
+  it("should be able search task completed no result", async () => {
+    const task = await createTask(user._id);
+    await updateStatusTask(task.id);
+
+    const response = await supertest(web)
+      .get("/api/task/completed")
+      .set("Authorization", `Bearer ${token}`)
+      .query({
+        query: "haloooo",
+      });
+
+    logger.debug(response.body);
+    expect(user._id).toBeDefined();
+    expect(task.id).toBeDefined();
+    expect(response.status).toBe(200);
+    expect(response.body.data.length).toBe(0);
+    expect(response.body.metaData.page).toBe(1);
+    expect(response.body.metaData.limit).toBe(5);
+    expect(response.body.metaData.total).toBe(0);
+    expect(response.body.metaData.totalPages).toBe(0);
+  });
+
+  it("should be able search task completed using paging & limit", async () => {
+    const task = await createTask(user._id);
+    await updateStatusTask(task.id);
+
+    const response = await supertest(web)
+      .get("/api/task/completed")
+      .set("Authorization", `Bearer ${token}`)
+      .query({
+        page: 2,
+        limit: 5,
+      });
+
+    logger.debug(response.body);
+    expect(user._id).toBeDefined();
+    expect(task.id).toBeDefined();
+    expect(response.status).toBe(200);
+    expect(response.body.data.length).toBe(0);
+    expect(response.body.metaData.page).toBe(2);
+    expect(response.body.metaData.limit).toBe(5);
+    expect(response.body.metaData.total).toBe(1);
+    expect(response.body.metaData.totalPages).toBe(1);
+  });
+
+  it("should be able search task completed using all params", async () => {
+    const task = await createTask(user._id);
+    await updateStatusTask(task.id);
+
+    const response = await supertest(web)
+      .get("/api/task/completed")
+      .set("Authorization", `Bearer ${token}`)
+      .query({
+        page: 1,
+        limit: 5,
+        sortBy: "createdAt",
+        order: "desc",
+        query: "Tes",
+      });
+
+    logger.debug(response.body);
+    expect(user._id).toBeDefined();
+    expect(task.id).toBeDefined();
+    expect(response.status).toBe(200);
+    expect(response.body.data.length).toBe(1);
+    expect(response.body.metaData.page).toBe(1);
+    expect(response.body.metaData.limit).toBe(5);
+    expect(response.body.metaData.total).toBe(1);
+    expect(response.body.metaData.totalPages).toBe(1);
   });
 });

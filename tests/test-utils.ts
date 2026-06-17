@@ -93,3 +93,7 @@ export const createTask = async (userId: string | Types.ObjectId) => {
 export const softDeleteTask = async (taskId: string | Types.ObjectId) => {
   return await Task.findByIdAndUpdate(taskId, { deleted_at: new Date() });
 };
+
+export const updateStatusTask = async (taskId: string | Types.ObjectId) => {
+  return await Task.findByIdAndUpdate(taskId, { is_completed: true });
+};
