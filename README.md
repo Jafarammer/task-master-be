@@ -4,7 +4,7 @@ RESTful API for task management built with Express.js, TypeScript, MongoDB, JWT 
 
 ## Features
 
-- User Authentication (Register, Login)
+- User Authentication (Register, Login, Account Activation)
 - JWT Authorization
 - Task Management (CRUD)
 - Profile Management
@@ -12,6 +12,9 @@ RESTful API for task management built with Express.js, TypeScript, MongoDB, JWT 
 - MongoDB Integration
 - Request Validation with Zod
 - Cloudinary Image Upload
+- Email Verification
+- Password Reset
+- Integration Testing with Jest & Supertest
 
 ## Tech Stack
 
@@ -24,6 +27,9 @@ RESTful API for task management built with Express.js, TypeScript, MongoDB, JWT 
 - Multer
 - Cloudinary
 - Zod
+- Jest
+- Supertest
+- MongoDB Memory Server
 
 ## Installation
 
@@ -66,28 +72,43 @@ EMAIL_SMTP_SERVICE_NAME=
 CLIENT_HOST=
 VERIFICATION_HOST=http://localhost:8000
 
-NODE_ENV=
+NODE_ENV=development
 ```
 
-### Run Development Server
+## Running the Application
+
+### Development
 
 ```bash
 npm run dev
 ```
 
-### Build Project
+### Build
 
 ```bash
 npm run build
 ```
 
-### Run Production Build
+### Production
 
 ```bash
 npm start
 ```
 
-## API Testing
+## Documentation
+
+### API Specifications
+
+API specifications are available in:
+
+```text
+docs/
+├── auth/
+├── profile/
+└── task/
+```
+
+### REST Client Testing
 
 This project uses the VS Code REST Client extension for manual API testing.
 
@@ -95,6 +116,46 @@ See:
 
 ```text
 REST_CLIENT.md
+```
+
+### Automated Testing
+
+This project uses:
+
+- Jest
+- Supertest
+- MongoDB Memory Server
+
+See:
+
+```text
+docs/testing.md
+```
+
+## Testing
+
+Run all tests:
+
+```bash
+npm test
+```
+
+Run a specific test file:
+
+```bash
+npm test -- tests/task.test.ts
+```
+
+Run tests in band:
+
+```bash
+npm test -- --runInBand
+```
+
+Generate coverage report:
+
+```bash
+npm run test:coverage
 ```
 
 ## Project Structure
@@ -114,14 +175,34 @@ src/
 
 api/
 ├── auth.http
+├── profile.http
 ├── task.http
-└── profile.http
+└── files/
 
 docs/
 ├── auth/
 ├── profile/
 ├── task/
+└── testing.md
+
+tests/
+├── setup.ts
+├── auth.test.ts
+├── profile.test.ts
+└── task.test.ts
 ```
+
+## Test Environment
+
+Automated tests use MongoDB Memory Server.
+
+```text
+Production Database  ❌ Not Used
+Local Database       ❌ Not Used
+MongoMemoryServer    ✅ Used
+```
+
+Database collections are automatically cleaned after each test run.
 
 ## License
 
