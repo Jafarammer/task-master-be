@@ -1044,3 +1044,40 @@ describe("GET /api/task/trash/statistics", () => {
     expect(response.body.message).toBe("Get trash statistics successfully");
   });
 });
+
+describe("DELETE /api/task/hard/:taskId", () => {
+  let token: string;
+  let user: any;
+
+  beforeEach(async () => {
+    const login = await loginUser();
+    token = login.token;
+    user = login.user;
+  });
+
+  it("should be able hard delete task", async () => {
+    const task = await createTask(user._id);
+
+    const response = await supertest(web)
+      .delete(`/api/task/hard/${task.id}`)
+      .set("Authorization", `Bearer ${token}`);
+
+    logger.debug(response.body);
+    expect(response.status).toBe(201);
+    expect(user._id).toBeDefined();
+    expect(task.id).toBeDefined();
+    expect(response.body.message).toBe("Task deleted successfully");
+  });
+
+  it("should rejected hard delete task when id task is invalid", async () => {
+    const taskIdInvalid: string = "6a2f425976e63529cea304c9";
+    const response = await supertest(web)
+      .delete(`/api/task/hard/${taskIdInvalid}`)
+      .set("Authorization", `Bearer ${token}`);
+
+    logger.debug(response.body);
+    expect(response.status).toBe(404);
+    expect(user._id).toBeDefined();
+    expect(response.body.message).toBe("Task not found or already deleted");
+  });
+});
