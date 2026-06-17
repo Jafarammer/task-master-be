@@ -693,7 +693,7 @@ export const getTrashStatistics = async (
           {
             $match: {
               user_id: objectUserId,
-              deleted_at: null,
+              // deleted_at: null, jika task yg di dalam list trash tidak memakan storage
             },
           },
           {

@@ -14,7 +14,7 @@
     "totalItems": 0,
     "trashItems": 0,
     "activeItems": 0,
-    "usedStorage": "0.00 KB",
+    "usedStorage": "0 B",
     "maxStorage": "5.00 MB",
     "percentage": 0
   },

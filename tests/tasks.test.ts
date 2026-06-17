@@ -978,3 +978,69 @@ describe("GET /api/task/pending", () => {
     expect(response.body.metaData.totalPages).toBe(1);
   });
 });
+
+describe("GET /api/task/trash/statistics", () => {
+  let token: string;
+  let user: any;
+
+  beforeEach(async () => {
+    const login = await loginUser();
+    token = login.token;
+    user = login.user;
+  });
+
+  it("should be able get trash statistics with active items", async () => {
+    await createTask(user._id);
+    const response = await supertest(web)
+      .get("/api/task/trash/statistics")
+      .set("Authorization", `Bearer ${token}`);
+
+    logger.debug(response.body);
+    expect(response.status).toBe(200);
+    expect(user._id).toBeDefined();
+    expect(response.body.data.totalItems).toBe(1);
+    expect(response.body.data.trashItems).toBe(0);
+    expect(response.body.data.activeItems).toBe(1);
+    expect(response.body.data.usedStorage).toBe("55 B");
+    expect(response.body.data.maxStorage).toBe("5.00 MB");
+    expect(response.body.data.percentage).toBe(0);
+    expect(response.body.message).toBe("Get trash statistics successfully");
+  });
+
+  it("should be able get trash statistics with trash items", async () => {
+    const task = await createTask(user._id);
+    await softDeleteTask(task.id);
+    const response = await supertest(web)
+      .get("/api/task/trash/statistics")
+      .set("Authorization", `Bearer ${token}`);
+
+    logger.debug(response.body);
+    expect(response.status).toBe(200);
+    expect(user._id).toBeDefined();
+    expect(task.id).toBeDefined();
+    expect(response.body.data.totalItems).toBe(1);
+    expect(response.body.data.trashItems).toBe(1);
+    expect(response.body.data.activeItems).toBe(0);
+    expect(response.body.data.usedStorage).toBe("55 B");
+    expect(response.body.data.maxStorage).toBe("5.00 MB");
+    expect(response.body.data.percentage).toBe(0);
+    expect(response.body.message).toBe("Get trash statistics successfully");
+  });
+
+  it("should be able get trash statistics no result", async () => {
+    const response = await supertest(web)
+      .get("/api/task/trash/statistics")
+      .set("Authorization", `Bearer ${token}`);
+
+    logger.debug(response.body);
+    expect(response.status).toBe(200);
+    expect(user._id).toBeDefined();
+    expect(response.body.data.totalItems).toBe(0);
+    expect(response.body.data.trashItems).toBe(0);
+    expect(response.body.data.activeItems).toBe(0);
+    expect(response.body.data.usedStorage).toBe("0 B");
+    expect(response.body.data.maxStorage).toBe("5.00 MB");
+    expect(response.body.data.percentage).toBe(0);
+    expect(response.body.message).toBe("Get trash statistics successfully");
+  });
+});
