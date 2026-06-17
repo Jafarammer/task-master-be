@@ -42,6 +42,14 @@ User not registered
 }
 ```
 
+Trash is empty
+
+```json
+{
+  "message": "Trash is empty"
+}
+```
+
 ### Internal Server Error (500)
 
 ```json

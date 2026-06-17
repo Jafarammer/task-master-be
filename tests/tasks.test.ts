@@ -1081,3 +1081,38 @@ describe("DELETE /api/task/hard/:taskId", () => {
     expect(response.body.message).toBe("Task not found or already deleted");
   });
 });
+
+describe("DELETE /api/task/trash/all", () => {
+  let token: string;
+  let user: any;
+
+  beforeEach(async () => {
+    const login = await loginUser();
+    token = login.token;
+    user = login.user;
+  });
+
+  it("should be able delete all task", async () => {
+    const task = await createTask(user._id);
+    await softDeleteTask(task.id);
+    const response = await supertest(web)
+      .delete("/api/task/trash/all")
+      .set("Authorization", `Bearer ${token}`);
+
+    logger.debug(response.body);
+    expect(response.status).toBe(200);
+    expect(user._id).toBeDefined();
+    expect(response.body.message).toBe("Trash emptied successfully");
+  });
+
+  it("should be able delete all task when trash is empty", async () => {
+    const response = await supertest(web)
+      .delete("/api/task/trash/all")
+      .set("Authorization", `Bearer ${token}`);
+
+    logger.debug(response.body);
+    expect(response.status).toBe(404);
+    expect(user._id).toBeDefined();
+    expect(response.body.message).toBe("Trash is empty");
+  });
+});
