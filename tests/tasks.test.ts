@@ -856,3 +856,125 @@ describe("GET /api/task/completed", () => {
     expect(response.body.metaData.totalPages).toBe(1);
   });
 });
+
+describe("GET /api/task/pending", () => {
+  let token: string;
+  let user: any;
+
+  beforeEach(async () => {
+    const login = await loginUser();
+    token = login.token;
+    user = login.user;
+    await createTask(user._id);
+  });
+
+  it("should be able get task pending", async () => {
+    const response = await supertest(web)
+      .get("/api/task/pending")
+      .set("Authorization", `Bearer ${token}`);
+
+    logger.debug(response.body);
+    expect(user._id).toBeDefined();
+    expect(response.status).toBe(200);
+    expect(response.body.data.length).toBe(1);
+    expect(response.body.metaData.page).toBe(1);
+    expect(response.body.metaData.limit).toBe(5);
+    expect(response.body.metaData.total).toBe(1);
+    expect(response.body.metaData.totalPages).toBe(1);
+  });
+
+  it("should be able search task pending using title", async () => {
+    const response = await supertest(web)
+      .get("/api/task/pending")
+      .set("Authorization", `Bearer ${token}`)
+      .query({
+        query: "Tes",
+      });
+
+    logger.debug(response.body);
+    expect(user._id).toBeDefined();
+    expect(response.status).toBe(200);
+    expect(response.body.data.length).toBe(1);
+    expect(response.body.metaData.page).toBe(1);
+    expect(response.body.metaData.limit).toBe(5);
+    expect(response.body.metaData.total).toBe(1);
+    expect(response.body.metaData.totalPages).toBe(1);
+  });
+
+  it("should be able search task pending using description", async () => {
+    const response = await supertest(web)
+      .get("/api/task/pending")
+      .set("Authorization", `Bearer ${token}`)
+      .query({
+        query: "Tes",
+      });
+
+    logger.debug(response.body);
+    expect(user._id).toBeDefined();
+    expect(response.status).toBe(200);
+    expect(response.body.data.length).toBe(1);
+    expect(response.body.metaData.page).toBe(1);
+    expect(response.body.metaData.limit).toBe(5);
+    expect(response.body.metaData.total).toBe(1);
+    expect(response.body.metaData.totalPages).toBe(1);
+  });
+
+  it("should be able search task pending no result", async () => {
+    const response = await supertest(web)
+      .get("/api/task/pending")
+      .set("Authorization", `Bearer ${token}`)
+      .query({
+        query: "haloooo",
+      });
+
+    logger.debug(response.body);
+    expect(user._id).toBeDefined();
+    expect(response.status).toBe(200);
+    expect(response.body.data.length).toBe(0);
+    expect(response.body.metaData.page).toBe(1);
+    expect(response.body.metaData.limit).toBe(5);
+    expect(response.body.metaData.total).toBe(0);
+    expect(response.body.metaData.totalPages).toBe(0);
+  });
+
+  it("should be able search task pending using paging & limit", async () => {
+    const response = await supertest(web)
+      .get("/api/task/pending")
+      .set("Authorization", `Bearer ${token}`)
+      .query({
+        page: 2,
+        limit: 5,
+      });
+
+    logger.debug(response.body);
+    expect(user._id).toBeDefined();
+    expect(response.status).toBe(200);
+    expect(response.body.data.length).toBe(0);
+    expect(response.body.metaData.page).toBe(2);
+    expect(response.body.metaData.limit).toBe(5);
+    expect(response.body.metaData.total).toBe(1);
+    expect(response.body.metaData.totalPages).toBe(1);
+  });
+
+  it("should be able search task pending using all params", async () => {
+    const response = await supertest(web)
+      .get("/api/task/pending")
+      .set("Authorization", `Bearer ${token}`)
+      .query({
+        page: 1,
+        limit: 5,
+        sortBy: "createdAt",
+        order: "desc",
+        query: "Tes",
+      });
+
+    logger.debug(response.body);
+    expect(user._id).toBeDefined();
+    expect(response.status).toBe(200);
+    expect(response.body.data.length).toBe(1);
+    expect(response.body.metaData.page).toBe(1);
+    expect(response.body.metaData.limit).toBe(5);
+    expect(response.body.metaData.total).toBe(1);
+    expect(response.body.metaData.totalPages).toBe(1);
+  });
+});
