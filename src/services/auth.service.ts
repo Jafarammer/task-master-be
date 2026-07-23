@@ -8,6 +8,10 @@ import {
   IResetPasswordPayload,
 } from "../interfaces/auth.interface";
 import { IServiceResponse } from "../interfaces/common.interface";
+import {
+  findUserByEmail,
+  cleatResetPasswordToken,
+} from "../repositories/auth.repository";
 import { createAccessToken } from "../utils/tokens";
 import sendRegistrationEmail from "../mail/sendRegistrationEmail";
 import sendForgotPasswordEmail from "../mail/sendForgotPasswordEmail";
@@ -26,7 +30,7 @@ export const loginUser = async (
   try {
     const email = normalizeEmail(payload.email);
 
-    const user = await User.findOne({ email });
+    const user = await findUserByEmail(email);
 
     if (!user) {
       return errorResponse("Email or password is invalid", 400);
@@ -45,9 +49,8 @@ export const loginUser = async (
       id: user._id.toString(),
       email: user.email,
     });
-    user.reset_password_token = null;
-    user.reset_password_expired = null;
-    user.save();
+
+    await cleatResetPasswordToken(user._id.toString());
 
     return successResponse(`Welcome ${user.full_name}`, 200, {
       token: accessToken,
