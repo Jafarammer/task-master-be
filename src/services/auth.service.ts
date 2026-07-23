@@ -11,6 +11,7 @@ import { IServiceResponse } from "../interfaces/common.interface";
 import {
   findUserByEmail,
   cleatResetPasswordToken,
+  createUser,
 } from "../repositories/auth.repository";
 import { createAccessToken } from "../utils/tokens";
 import sendRegistrationEmail from "../mail/sendRegistrationEmail";
@@ -66,7 +67,7 @@ export const registerUser = async (
 ): Promise<IServiceResponse> => {
   try {
     const email = normalizeEmail(payload.email);
-    const existing = await User.findOne({ email: email });
+    const existing = await findUserByEmail(email);
     if (existing) {
       return errorResponse("Email already registered", 409);
     }
@@ -83,15 +84,13 @@ export const registerUser = async (
       activationLink: activationLink,
     });
 
-    const user = new User({
+    await createUser({
       full_name: payload.fullName,
       email: payload.email,
       password: hashedPassword,
       activationCode: activationCode,
       is_active: false,
     });
-
-    await user.save();
 
     return successResponse(
       "Registered successfully. Check your email to activate account.",

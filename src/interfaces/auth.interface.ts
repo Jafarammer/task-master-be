@@ -32,3 +32,11 @@ export interface IResetPasswordPayload {
   newPassword: string;
   confirmPassword: string;
 }
+
+export interface IRepositoryPayload {
+  full_name: string;
+  email: string;
+  password: string;
+  activationCode: string;
+  is_active: boolean;
+}
