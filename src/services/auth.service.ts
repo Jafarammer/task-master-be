@@ -1,5 +1,4 @@
 import crypto from "crypto";
-import User from "../models/user.model";
 import {
   ILoginPayload,
   IRegisterPayload,
@@ -12,6 +11,14 @@ import {
   findUserByEmail,
   cleatResetPasswordToken,
   createUser,
+  updateUserActivation,
+  findUserByActivation,
+  updateUserReactivation,
+  findUserById,
+  updateUserPassword,
+  updateForgotPassword,
+  updataResetPassword,
+  findUserByToken,
 } from "../repositories/auth.repository";
 import { createAccessToken } from "../utils/tokens";
 import sendRegistrationEmail from "../mail/sendRegistrationEmail";
@@ -105,7 +112,7 @@ export const registerUser = async (
 export const activateUser = async (
   code: string,
 ): Promise<IServiceResponse<{ redirectUrl: string }>> => {
-  const user = await User.findOne({ activationCode: code });
+  const user = await findUserByActivation(code);
 
   if (!user) {
     return errorResponse("Invalid activation code", 400, {
@@ -113,9 +120,7 @@ export const activateUser = async (
     });
   }
 
-  user.is_active = true;
-  user.activationCode = null;
-  await user.save();
+  await updateUserActivation(user._id.toString());
 
   return successResponse("Account activated successfully", 200, {
     redirectUrl: `${CLIENT_HOST}/login?status=success&message=${encodeURIComponent("Account activated successfully")}`,
@@ -125,7 +130,7 @@ export const activateUser = async (
 export const reActivateUser = async (
   code: string,
 ): Promise<IServiceResponse<{ redirectUrl: string }>> => {
-  const user = await User.findOne({ activationCode: code });
+  const user = await findUserByActivation(code);
 
   if (!user) {
     return errorResponse("Invalid activation code", 400, {
@@ -143,11 +148,7 @@ export const reActivateUser = async (
     });
   }
 
-  user.is_active = true;
-  user.email = pendingEmail;
-  user.pending_mail = null;
-  user.activationCode = null;
-  await user.save();
+  await updateUserReactivation(user._id.toString(), pendingEmail);
 
   return successResponse("Account activated successfully", 200, {
     redirectUrl: `${CLIENT_HOST}/login?status=success&message=${encodeURIComponent("Account activated successfully")}`,
@@ -164,7 +165,7 @@ export const changePassword = async (
       return errorResponse(validatedId.message, 400);
     }
 
-    const user = await User.findById(validatedId.value);
+    const user = await findUserById(validatedId.value);
     if (!user) {
       return errorResponse("User not found", 404);
     }
@@ -189,9 +190,7 @@ export const changePassword = async (
     }
 
     const hashedPassword = await hashPassword(payload.newPassword);
-    user.password = hashedPassword;
-    user.refreshToken = null;
-    await user.save();
+    await updateUserPassword(validatedId.value, hashedPassword);
 
     return successResponse("Password changed successfully", 201, {
       requireRelogin: true,
@@ -208,16 +207,13 @@ export const forgotPassword = async (
   try {
     const email = normalizeEmail(payload.email);
 
-    const user = await User.findOne({ email });
+    const user = await findUserByEmail(email);
     if (!user) {
       return errorResponse("User not found", 404);
     }
 
     const resetToken = crypto.randomBytes(32).toString("hex");
-    user.reset_password_token = resetToken;
-    user.reset_password_expired = new Date(Date.now() + 1000 * 60 * 5);
-
-    await user.save();
+    await updateForgotPassword(user._id.toString(), resetToken);
 
     const resetLink = `${CLIENT_HOST}/reset-password?token=${resetToken}`;
 
@@ -240,9 +236,8 @@ export const resetPassword = async (
   try {
     const newPassword = payload.newPassword.trim();
 
-    const user = await User.findOne({
-      reset_password_token: payload.token.trim(),
-    });
+    const user = await findUserByToken(payload.token.trim());
+
     if (!user) {
       return errorResponse("Invalid reset token", 400);
     }
@@ -251,9 +246,7 @@ export const resetPassword = async (
       !user.reset_password_expired ||
       user.reset_password_expired < new Date()
     ) {
-      user.reset_password_token = null;
-      user.reset_password_expired = null;
-      await user.save();
+      await cleatResetPasswordToken(user._id.toString());
       return errorResponse("Reset password expired", 400);
     }
 
@@ -265,12 +258,8 @@ export const resetPassword = async (
       );
     }
     const hashedPassword = await hashPassword(newPassword);
-    user.password = hashedPassword;
-    user.reset_password_token = null;
-    user.reset_password_expired = null;
-    user.refreshToken = null;
 
-    await user.save();
+    await updataResetPassword(user._id.toString(), hashedPassword);
 
     return successResponse("Password reset successfully", 201);
   } catch (error: any) {
