@@ -1,15 +1,24 @@
-import User from "../models/user.model";
 import crypto from "crypto";
 import { IServiceResponse } from "../interfaces/common.interface";
 import sendReverifyEmail from "../mail/sendReverifyEmail";
 import {
   IUpdateProfilePayload,
   IResultDataProfile,
+  IUpdateProfileResult,
 } from "../interfaces/profile.interface";
+import {
+  findUserProfileById,
+  findUserProfileForUpdate,
+  findUserByEmailExceptId,
+  updateUserProfileById,
+  updateProfilePictureById,
+} from "../repositories/profile.repository";
+import { findUserById } from "../repositories/auth.repository";
 import { uploadImageToCloudinary } from "../utils/uploadImage";
 import { VERIFICATION_HOST } from "../utils/env";
 import { successResponse, errorResponse } from "../helpers/response.helper";
 import validationId from "../helpers/validationId.helper";
+import { normalizeEmail } from "../helpers/auth.helper";
 
 export const getProfile = async (
   id: string,
@@ -20,20 +29,16 @@ export const getProfile = async (
       return errorResponse(validatedId.message, 400);
     }
 
-    const userFindId = await User.findById(validatedId.value)
-      .select(
-        "-password -_id -refreshToken -is_active -activationCode -createdAt -updatedAt",
-      )
-      .exec();
+    const userProfile = await findUserProfileById(validatedId.value);
 
-    if (!userFindId) {
+    if (!userProfile) {
       return errorResponse("User not found", 404);
     }
 
     return successResponse("Fetch profile successfully", 200, {
-      fullName: userFindId.full_name,
-      email: userFindId.email,
-      profilePicture: userFindId.profile_picture ?? null,
+      fullName: userProfile.full_name,
+      email: userProfile.email,
+      profilePicture: userProfile.profile_picture ?? null,
     });
   } catch (error: any) {
     return { error: true, code: 500, message: "Internal server error" };
@@ -50,55 +55,59 @@ export const updateProfile = async (
       return errorResponse(validatedId.message, 400);
     }
 
-    const user = await User.findById(validatedId.value);
+    const user = await findUserProfileForUpdate(validatedId.value);
 
     if (!user) {
       return errorResponse("User not found", 404);
     }
 
-    const existingEmail = await User.findOne({
-      email: payload.email.trim(),
-      _id: {
-        $ne: user._id,
-      },
-    });
+    const fullName = payload.fullName.trim();
+    const email = normalizeEmail(payload.email);
+
+    const existingEmail = await findUserByEmailExceptId(email, user.id);
 
     if (existingEmail) {
       return errorResponse("Email already registered", 400);
     }
 
-    const isEmailChanged = payload.email.trim() !== user.email;
+    const isEmailChanged = email !== user.email;
 
-    user.full_name = payload.fullName.trim();
+    const updatePayload: IUpdateProfileResult = {
+      full_name: fullName,
+    };
 
     if (isEmailChanged) {
       const emailChangeCode = crypto.randomBytes(32).toString("hex");
       const verificationLink = `${VERIFICATION_HOST}/api/auth/reactivate?code=${emailChangeCode}`;
 
-      user.pending_mail = payload.email.trim();
-      user.activationCode = emailChangeCode;
-      user.is_active = false;
-      user.refreshToken = null;
+      updatePayload.pending_mail = email;
+      updatePayload.activationCode = emailChangeCode;
+      updatePayload.is_active = false;
+      updatePayload.refreshToken = null;
 
       await sendReverifyEmail({
-        fullName: user.full_name,
+        fullName: fullName,
         currentEmail: user.email,
-        newEmail: payload.email.trim(),
+        newEmail: email,
         verificationLink: verificationLink,
       });
     }
 
-    await user.save();
+    const updatedUser = await updateUserProfileById(user.id, updatePayload);
+
+    if (!updatedUser) {
+      return errorResponse("User not found", 404);
+    }
 
     return successResponse(
       isEmailChanged
         ? "Verification email sent to your new email address"
         : "Update profile successfully",
-      201,
+      200,
       {
-        fullName: user.full_name,
-        email: user.email,
-        profilePicture: user.profile_picture ?? null,
+        fullName: updatedUser.full_name,
+        email: updatedUser.email,
+        profilePicture: updatedUser.profile_picture ?? null,
         requireRelogin: isEmailChanged,
       },
     );
@@ -122,21 +131,26 @@ export const updateProfilePicture = async (
       return errorResponse("Profile picture is required", 400);
     }
 
-    const user = await User.findById(validatedId.value);
+    const user = await findUserById(validatedId.value);
     if (!user) {
       return errorResponse("User not found", 404);
     }
 
     const uploadResult = await uploadImageToCloudinary(file);
 
-    user.profile_picture = uploadResult.secure_url;
+    const updatedUser = await updateProfilePictureById(
+      validatedId.value,
+      uploadResult.secure_url,
+    );
 
-    await user.save();
+    if (!updatedUser) {
+      return errorResponse("User not found", 404);
+    }
 
     return successResponse("Profile picture updated successfully", 201, {
-      fullName: user.full_name,
-      email: user.email,
-      profilePicture: user.profile_picture ?? null,
+      fullName: updatedUser.full_name,
+      email: updatedUser.email,
+      profilePicture: updatedUser.profile_picture ?? null,
     });
   } catch (error: any) {
     console.error("UPDATE PROFILE PICTURE ERROR:", error);
