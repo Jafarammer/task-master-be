@@ -2,8 +2,14 @@ import { z } from "zod";
 
 export const createTaskValidation = z
   .object({
-    title: z.string({ error: "Title is required" }),
-    description: z.string({ error: "Description is required" }),
+    title: z
+      .string({ error: "Title is required" })
+      .trim()
+      .min(1, "Title is required"),
+    description: z
+      .string({ error: "Description is required" })
+      .trim()
+      .min(1, "Description is required"),
     startDate: z.coerce
       .date({ error: "Start date is required" })
       .min(
@@ -27,8 +33,14 @@ export const createTaskValidation = z
 
 export const updateTaskValidation = z
   .object({
-    title: z.string({ error: "Title is required" }),
-    description: z.string({ error: "Description is required" }),
+    title: z
+      .string({ error: "Title is required" })
+      .trim()
+      .min(1, "Title is required"),
+    description: z
+      .string({ error: "Description is required" })
+      .trim()
+      .min(1, "Description is required"),
     startDate: z.coerce.date({ error: "Start date is required" }),
     endDate: z.coerce.date({ error: "End date is required" }),
     priority: z.enum(["low", "medium", "high"], {

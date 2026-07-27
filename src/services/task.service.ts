@@ -1,5 +1,3 @@
-import mongoose from "mongoose";
-import Task from "../models/task.model";
 import {
   IServiceParams,
   IServiceResponse,
@@ -11,6 +9,21 @@ import {
   IResultMetaDataTask,
   IResultDataTrashStatistics,
 } from "../interfaces/task.interface";
+import {
+  insertTask,
+  findActiveTaskByIdAndUserId,
+  updateTaskByIdAndUserId,
+  findTasksByUserId,
+  softDeleteTaskByIdandUserId,
+  restoreTaskByIdandUserId,
+  findInactiveTaskByIdAndUserId,
+  updateStatusTaskByIdAndUserId,
+  findTasksByUserIdStatus,
+  findTrashTaskByUserId,
+  getTaskStatisticsByUserId,
+  hardDeleteTaskByIdAndUserId,
+  deleteAllTrashTasksByUserId,
+} from "../repositories/task.repository";
 import validationId from "../helpers/validationId.helper";
 import { successResponse, errorResponse } from "../helpers/response.helper";
 import getPagination from "../helpers/pagination.helper";
@@ -48,15 +61,7 @@ export const createTask = async (
       );
     }
 
-    const newTask = await Task.create({
-      user_id: validatedId.value,
-      title: payload.title,
-      description: payload.description,
-      start_date: payload.startDate,
-      end_date: payload.endDate,
-      priority: payload.priority,
-      size: taskSize,
-    });
+    const newTask = await insertTask(validatedId.value, payload, taskSize);
 
     await newTask.save();
 
@@ -93,11 +98,10 @@ export const updateTask = async (
       return errorResponse(validatedUserId.message, 400);
     }
 
-    const task = await Task.findOne({
-      _id: validatedTaskId.value,
-      user_id: validatedUserId.value,
-      deleted_at: null,
-    });
+    const task = await findActiveTaskByIdAndUserId(
+      validatedTaskId.value,
+      validatedUserId.value,
+    );
 
     if (!task) {
       return errorResponse("Task not found", 404);
@@ -105,8 +109,8 @@ export const updateTask = async (
 
     const oldTaskSize = task.size;
     const newTaskSize = calculateTaskSize({
-      title: payload.title || task.title,
-      description: payload.description || task.description,
+      title: payload.title,
+      description: payload.description,
     });
 
     const storageValidation = await validateUserStorage(
@@ -122,37 +126,25 @@ export const updateTask = async (
       );
     }
 
-    if (payload.title !== undefined) {
-      task.title = payload.title;
-    }
+    const updatePayload = await updateTaskByIdAndUserId(
+      validatedTaskId.value,
+      validatedUserId.value,
+      payload,
+      newTaskSize,
+    );
 
-    if (payload.description !== undefined) {
-      task.description = payload.description;
+    if (!updatePayload) {
+      return errorResponse("Task not found", 404);
     }
-
-    if (payload.startDate !== undefined) {
-      task.start_date = new Date(payload.startDate);
-    }
-
-    if (payload.endDate !== undefined) {
-      task.end_date = new Date(payload.endDate);
-    }
-
-    if (payload.priority !== undefined) {
-      task.priority = payload.priority;
-    }
-    task.size = newTaskSize;
-
-    await task.save();
 
     return successResponse("Update task successfully", 201, {
       id: id,
-      title: task.title,
-      description: task.description,
-      startDate: task.start_date?.toISOString().split("T")[0] ?? null,
-      endDate: task.end_date?.toISOString().split("T")[0] ?? null,
-      priority: task.priority as "low" | "medium" | "high",
-      isCompleted: task.is_completed,
+      title: updatePayload.title,
+      description: updatePayload.description,
+      startDate: updatePayload.start_date?.toISOString().split("T")[0] ?? null,
+      endDate: updatePayload.end_date?.toISOString().split("T")[0] ?? null,
+      priority: updatePayload.priority as "low" | "medium" | "high",
+      isCompleted: updatePayload.is_completed,
     });
   } catch (error: any) {
     console.error("UPDATE TASK ERROR:", error);
@@ -178,40 +170,17 @@ export const getTask = async (
 
     const pagination = getPagination(params);
 
-    const filters: Record<string, unknown> = {
-      user_id: validatedUserId.value,
-      deleted_at: null,
-    };
-
-    if (params.query) {
-      filters.$or = [
-        {
-          title: {
-            $regex: params.query,
-            $options: "i",
-          },
-        },
-        {
-          description: {
-            $regex: params.query,
-            $options: "i",
-          },
-        },
-      ];
-    }
-
-    const [tasks, total] = await Promise.all([
-      Task.find(filters)
-        .sort(pagination.sort)
-        .skip(pagination.skip)
-        .limit(pagination.limit),
-
-      Task.countDocuments(filters),
-    ]);
+    const result = await findTasksByUserId({
+      userId: validatedUserId.value,
+      query: params.query,
+      skip: pagination.skip,
+      limit: pagination.limit,
+      sort: pagination.sort,
+    });
 
     return successResponse("Get task successfully", 200, {
-      tasks: tasks.map((task) => ({
-        id: task.id,
+      tasks: result.tasks.map((task) => ({
+        id: task._id,
         title: task.title,
         description: task.description,
         startDate: task.start_date?.toISOString().split("T")[0] ?? null,
@@ -225,8 +194,8 @@ export const getTask = async (
       pagination: {
         page: pagination.page,
         limit: pagination.limit,
-        total,
-        totalPages: Math.ceil(total / pagination.limit),
+        total: result.total,
+        totalPages: Math.ceil(result.total / pagination.limit),
       },
     });
   } catch (error: any) {
@@ -250,25 +219,15 @@ export const softDeleteTask = async (
       return errorResponse(validationTaskId.message, 400);
     }
 
-    const task = await Task.findOne({
-      _id: validationTaskId.value,
-      user_id: validationUserId.value,
-      deleted_at: null,
-    } satisfies {
-      _id: string;
-      user_id: string;
-      deleted_at: null;
-    });
+    const isDeleted = await softDeleteTaskByIdandUserId(
+      validationTaskId.value,
+      validationUserId.value,
+    );
 
-    if (!task) {
-      return errorResponse("Task not found or already deleted", 400);
-    }
+    if (!isDeleted)
+      return errorResponse("Task not found or already deleted", 404);
 
-    // soft deleted
-    task.deleted_at = new Date();
-    await task.save();
-
-    return successResponse("Task moved to trash successfully", 201);
+    return successResponse("Task moved to trash successfully", 200);
   } catch (error: any) {
     console.error("SOFT DELETE TASK ERROR", error);
     return errorResponse("Internal server error", 500);
@@ -290,18 +249,16 @@ export const hardDeleteTask = async (
       return errorResponse(validatedTaskId.message, 400);
     }
 
-    const query = {
-      _id: validatedTaskId.value,
-      user_id: validatedUserId.value,
-    };
+    const isDeleted = await hardDeleteTaskByIdAndUserId(
+      validatedTaskId.value,
+      validatedUserId.value,
+    );
 
-    const deleted = await Task.findOneAndDelete(query).exec();
-
-    if (!deleted) {
-      return errorResponse("Task not found or already deleted", 404);
+    if (!isDeleted) {
+      return errorResponse("Task not found or not in trash", 404);
     }
 
-    return successResponse("Task deleted successfully", 201);
+    return successResponse("Task deleted successfully", 200);
   } catch (error: any) {
     console.error("HARD DELETE TASK ERROR", error);
     return errorResponse("Internal server error", 500);
@@ -323,13 +280,10 @@ export const restoreTask = async (
       return errorResponse(validatedTaskId.message, 400);
     }
 
-    const query = {
-      _id: validatedTaskId.value,
-      user_id: validatedUserId.value,
-      deleted_at: { $ne: null },
-    };
-
-    const task = await Task.findOne(query).exec();
+    const task = await findInactiveTaskByIdAndUserId(
+      validatedTaskId.value,
+      validatedUserId.value,
+    );
 
     if (!task) {
       return errorResponse("Task not found or not deleted", 404);
@@ -346,10 +300,14 @@ export const restoreTask = async (
       );
     }
 
-    task.deleted_at = null;
-    await task.save();
+    const isRestored = await restoreTaskByIdandUserId(
+      validatedTaskId.value,
+      validatedUserId.value,
+    );
 
-    return successResponse("Task restored successfully", 201);
+    if (!isRestored) return errorResponse("Task not found or not deleted", 404);
+
+    return successResponse("Task restored successfully", 200);
   } catch (error: any) {
     console.error("RESTOR TASK ERROR", error);
     return errorResponse("Internal server error", 500);
@@ -372,25 +330,17 @@ export const updateTaskStatus = async (
       return errorResponse(validatedTaskId.message, 400);
     }
 
-    const query = {
-      _id: validatedTaskId.value,
-      user_id: validatedUserId.value,
-      deleted_at: null,
-    };
-
-    const updated = await Task.findOneAndUpdate(
-      query,
-      {
-        is_completed: payload.isCompleted,
-      },
-      { new: true },
+    const updated = await updateStatusTaskByIdAndUserId(
+      validatedTaskId.value,
+      validatedUserId.value,
+      payload.isCompleted,
     );
 
     if (!updated) {
       return errorResponse("Task not found", 404);
     }
 
-    return successResponse("Task status updated successfully", 201);
+    return successResponse("Task status updated successfully", 200);
   } catch (error: any) {
     console.error("UPDATE STATUS TASK ERROR", error);
     return errorResponse("Internal server error", 500);
@@ -414,40 +364,20 @@ export const getTaskCompleted = async (
 
     const pagination = getPagination(params);
 
-    const filters: Record<string, unknown> = {
-      user_id: validatedId.value,
-      deleted_at: null,
-      is_completed: true,
-    };
-
-    if (params.query) {
-      filters.$or = [
-        {
-          title: {
-            $regex: params.query,
-            $options: "i",
-          },
-        },
-        {
-          description: {
-            $regex: params.query,
-            $options: "i",
-          },
-        },
-      ];
-    }
-
-    const [tasks, total] = await Promise.all([
-      Task.find(filters)
-        .sort(pagination.sort)
-        .skip(pagination.skip)
-        .limit(pagination.limit),
-      Task.countDocuments(filters),
-    ]);
+    const result = await findTasksByUserIdStatus(
+      {
+        userId: validatedId.value,
+        query: params.query,
+        skip: pagination.skip,
+        limit: pagination.limit,
+        sort: pagination.sort,
+      },
+      "complete",
+    );
 
     return successResponse("Get task completed successfully", 200, {
-      tasks: tasks.map((task) => ({
-        id: task.id,
+      tasks: result.tasks.map((task) => ({
+        id: task._id,
         title: task.title,
         description: task.description,
         startDate: task.start_date?.toISOString().split("T")[0] ?? null,
@@ -458,8 +388,8 @@ export const getTaskCompleted = async (
       pagination: {
         page: pagination.page,
         limit: pagination.limit,
-        total,
-        totalPages: Math.ceil(total / pagination.limit),
+        total: result.total,
+        totalPages: Math.ceil(result.total / pagination.limit),
       },
     });
   } catch (error: any) {
@@ -485,40 +415,20 @@ export const getTaskPending = async (
 
     const pagination = getPagination(params);
 
-    const filters: Record<string, unknown> = {
-      user_id: validatedId.value,
-      deleted_at: null,
-      is_completed: false,
-    };
-
-    if (params.query) {
-      filters.$or = [
-        {
-          title: {
-            $regex: params.query,
-            $options: "i",
-          },
-        },
-        {
-          description: {
-            $regex: params.query,
-            $options: "i",
-          },
-        },
-      ];
-    }
-
-    const [tasks, total] = await Promise.all([
-      Task.find(filters)
-        .sort(pagination.sort)
-        .skip(pagination.skip)
-        .limit(pagination.limit),
-      Task.countDocuments(filters),
-    ]);
+    const result = await findTasksByUserIdStatus(
+      {
+        userId: validatedId.value,
+        query: params.query,
+        skip: pagination.skip,
+        limit: pagination.limit,
+        sort: pagination.sort,
+      },
+      "pending",
+    );
 
     return successResponse("Get task pending successfully", 200, {
-      tasks: tasks.map((task) => ({
-        id: task.id,
+      tasks: result.tasks.map((task) => ({
+        id: task._id,
         title: task.title,
         description: task.description,
         startDate: task.start_date?.toISOString().split("T")[0] ?? null,
@@ -532,8 +442,8 @@ export const getTaskPending = async (
       pagination: {
         page: pagination.page,
         limit: pagination.limit,
-        total,
-        totalPages: Math.ceil(total / pagination.limit),
+        total: result.total,
+        totalPages: Math.ceil(result.total / pagination.limit),
       },
     });
   } catch (error: any) {
@@ -557,20 +467,17 @@ export const taskDetail = async (
       return errorResponse(validatedTaskId.message, 400);
     }
 
-    const taskFindId = await Task.findOne({
-      _id: validatedTaskId.value,
-      user_id: validatedUserId.value,
-      deleted_at: null,
-    })
-      .select("-user_id -deleted_at -createdAt -updatedAt")
-      .exec();
+    const taskFindId = await findActiveTaskByIdAndUserId(
+      validatedTaskId.value,
+      validatedUserId.value,
+    );
 
     if (!taskFindId) {
       return errorResponse("Task not found", 404);
     }
 
     return successResponse("Get task detail successfully", 200, {
-      id: taskFindId.id,
+      id: taskFindId._id as string,
       title: taskFindId.title,
       description: taskFindId.description,
       startDate: taskFindId.start_date?.toISOString().split("T")[0] ?? null,
@@ -604,41 +511,17 @@ export const getTaskTrash = async (
 
     const pagination = getPagination(params);
 
-    const filters: Record<string, unknown> = {
-      user_id: validatedId.value,
-      deleted_at: {
-        $ne: null,
-      },
-    };
-
-    if (params.query) {
-      filters.$or = [
-        {
-          title: {
-            $regex: params.query,
-            $options: "i",
-          },
-        },
-        {
-          description: {
-            $regex: params.query,
-            $options: "i",
-          },
-        },
-      ];
-    }
-
-    const [tasks, total] = await Promise.all([
-      Task.find(filters)
-        .sort(pagination.sort)
-        .skip(pagination.skip)
-        .limit(pagination.limit),
-      Task.countDocuments(filters),
-    ]);
+    const result = await findTrashTaskByUserId({
+      userId: validatedId.value,
+      query: params.query,
+      skip: pagination.skip,
+      limit: pagination.limit,
+      sort: pagination.sort,
+    });
 
     return successResponse("Get task trash successfully", 200, {
-      tasks: tasks.map((task) => ({
-        id: task.id,
+      tasks: result.tasks.map((task) => ({
+        id: task._id,
         title: task.title,
         description: task.description,
         startDate: task.start_date?.toISOString().split("T")[0] ?? null,
@@ -649,8 +532,8 @@ export const getTaskTrash = async (
       pagination: {
         page: pagination.page,
         limit: pagination.limit,
-        total,
-        totalPages: Math.ceil(total / pagination.limit),
+        total: result.total,
+        totalPages: Math.ceil(result.total / pagination.limit),
       },
     });
   } catch (error: any) {
@@ -668,57 +551,18 @@ export const getTrashStatistics = async (
       return errorResponse(validatedId.message, 400);
     }
 
-    const objectUserId = new mongoose.Types.ObjectId(validatedId.value);
-
-    const [totalItems, trashItems, activeItems, storageResult] =
-      await Promise.all([
-        // all task
-        Task.countDocuments({
-          user_id: objectUserId,
-        }),
-        // trash only
-        Task.countDocuments({
-          user_id: objectUserId,
-          deleted_at: {
-            $ne: null,
-          },
-        }),
-        // active only
-        Task.countDocuments({
-          user_id: objectUserId,
-          deleted_at: null,
-        }),
-        // active storage only
-        Task.aggregate([
-          {
-            $match: {
-              user_id: objectUserId,
-              // deleted_at: null, jika task yg di dalam list trash tidak memakan storage
-            },
-          },
-          {
-            $group: {
-              _id: null,
-              totalSize: {
-                $sum: "$size",
-              },
-            },
-          },
-        ]),
-      ]);
-
-    const usedBytes = storageResult[0]?.totalSize || 0;
+    const statistics = await getTaskStatisticsByUserId(validatedId.value);
 
     const percentage = Math.min(
-      Math.round((usedBytes / MAX_USER_STORAGE) * 100),
+      Math.round((statistics.usedBytes / MAX_USER_STORAGE) * 100),
       100,
     );
 
     return successResponse("Get trash statistics successfully", 200, {
-      totalItems,
-      trashItems,
-      activeItems,
-      usedStorage: formatBytes(usedBytes),
+      totalItems: statistics.totalItems,
+      trashItems: statistics.trashItems,
+      activeItems: statistics.activeItems,
+      usedStorage: formatBytes(statistics.usedBytes),
       maxStorage: formatBytes(MAX_USER_STORAGE),
       percentage,
     });
@@ -737,23 +581,10 @@ export const deleteAllTaskTrash = async (
       return errorResponse(validatedId.message, 400);
     }
 
-    const trashTasks = await Task.find({
-      user_id: validatedId.value,
-      deleted_at: {
-        $ne: null,
-      },
-    });
-
-    if (trashTasks.length === 0) {
+    const deletedCount = await deleteAllTrashTasksByUserId(validatedId.value);
+    if (deletedCount === 0) {
       return errorResponse("Trash is empty", 404);
     }
-
-    await Task.deleteMany({
-      user_id: validatedId.value,
-      deleted_at: {
-        $ne: null,
-      },
-    });
 
     return successResponse("Trash emptied successfully", 200);
   } catch (error: any) {

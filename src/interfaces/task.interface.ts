@@ -38,3 +38,26 @@ export interface IResultDataTrashStatistics {
   maxStorage: string;
   percentage: number;
 }
+
+export interface ITaskRepositoryResult {
+  _id: string;
+  title: string;
+  description: string;
+  start_date: Date | null;
+  end_date: Date | null;
+  priority: "low" | "medium" | "high";
+  is_completed: boolean;
+}
+
+export interface IGetTaskRepositoryResult {
+  tasks: ITaskRepositoryResult[];
+  total: number;
+}
+
+export interface IGetTaskRepositoryParams {
+  userId: string;
+  query?: string;
+  skip: number;
+  limit: number;
+  sort: Record<string, 1 | -1>;
+}

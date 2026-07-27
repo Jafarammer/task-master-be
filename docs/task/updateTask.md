@@ -1,6 +1,6 @@
 # PATCH TASK API SPEC
 
-## Endpoint : PATCH /api/task/:id
+## Endpoint : PUT /api/task/:id
 
 ### Request Header:
 

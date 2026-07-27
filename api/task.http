@@ -39,7 +39,7 @@ Accept: application/json
 Authorization: Bearer {{token}}
 
 ### Update Task
-PATCH http://localhost:8000/api/task/{{taskId}}
+PUT  http://localhost:8000/api/task/{{taskId}}
 Content-Type: application/json
 Accept: application/json
 Authorization: Bearer {{token}}
