@@ -19,14 +19,15 @@ describe("POST /api/task", () => {
   });
 
   it("should be able create new task", async () => {
+    // note : untuk start date dan end datenya harus tanggal saat ini yah atau tanggal next dari hari ini
     const response = await supertest(web)
       .post("/api/task")
       .set("Authorization", `Bearer ${token}`)
       .send({
         title: "test",
         description: "test",
-        startDate: "2026-06-23",
-        endDate: "2026-06-23",
+        startDate: "2026-07-31",
+        endDate: "2026-07-31",
         priority: "high",
       });
     logger.debug(response.body);
@@ -112,9 +113,7 @@ describe("POST /api/task", () => {
       });
     logger.debug(response.body);
     expect(response.status).toBe(400);
-    expect(response.body.message).toBe(
-      "End date must be greater than start date",
-    );
+    expect(response.body.message).toBe("Date cannot be earlier than today");
   });
 
   it("should reject task creation when token is missing", async () => {
@@ -130,7 +129,7 @@ describe("POST /api/task", () => {
       });
     logger.debug(response.body);
     expect(response.status).toBe(401);
-    expect(response.body.message).toBe("Unauthorized");
+    expect(response.body.message).toBe("Access token is required");
   });
 
   it("should reject task creation when token is invalid", async () => {
@@ -145,7 +144,7 @@ describe("POST /api/task", () => {
         priority: "high",
       });
     logger.debug(response.body);
-    expect(response.status).toBe(403);
+    expect(response.status).toBe(401);
     expect(response.body.message).toBe("Invalid or expired token");
   });
 });
@@ -278,7 +277,7 @@ describe("GET /api/task", () => {
   });
 });
 
-describe("PATCH /api/task/:id", () => {
+describe("PUT /api/task/:id", () => {
   let token: string;
   let user: any;
 
@@ -291,7 +290,7 @@ describe("PATCH /api/task/:id", () => {
   it("should be able update task", async () => {
     const task = await createTask(user._id);
     const response = await supertest(web)
-      .patch(`/api/task/${task._id}`)
+      .put(`/api/task/${task._id}`)
       .set("Authorization", `Bearer ${token}`)
       .send({
         title: "Update task",
@@ -311,7 +310,7 @@ describe("PATCH /api/task/:id", () => {
   it("should reject update task when title is missing", async () => {
     const task = await createTask(user._id);
     const response = await supertest(web)
-      .patch(`/api/task/${task._id}`)
+      .put(`/api/task/${task._id}`)
       .set("Authorization", `Bearer ${token}`)
       .send({
         title: null,
@@ -331,7 +330,7 @@ describe("PATCH /api/task/:id", () => {
   it("should reject update task when description is missing", async () => {
     const task = await createTask(user._id);
     const response = await supertest(web)
-      .patch(`/api/task/${task._id}`)
+      .put(`/api/task/${task._id}`)
       .set("Authorization", `Bearer ${token}`)
       .send({
         title: "Test",
@@ -351,7 +350,7 @@ describe("PATCH /api/task/:id", () => {
   it("should reject update task when end date is greater than start date", async () => {
     const task = await createTask(user._id);
     const response = await supertest(web)
-      .patch(`/api/task/${task._id}`)
+      .put(`/api/task/${task._id}`)
       .set("Authorization", `Bearer ${token}`)
       .send({
         title: "Test",
@@ -374,7 +373,7 @@ describe("PATCH /api/task/:id", () => {
     const task = await createTask(user._id);
     const taskInvalid: string = "6a2f425976e63529cea304c9";
     const response = await supertest(web)
-      .patch(`/api/task/${taskInvalid}`)
+      .put(`/api/task/${taskInvalid}`)
       .set("Authorization", `Bearer ${token}`)
       .send({
         title: "Test",
@@ -410,7 +409,7 @@ describe("DELETE /api/task/soft/:id", () => {
       .set("Authorization", `Bearer ${token}`);
 
     logger.debug(response.body);
-    expect(response.status).toBe(201);
+    expect(response.status).toBe(200);
     expect(user._id).toBeDefined();
     expect(task._id).toBeDefined();
     expect(response.body.message).toBe("Task moved to trash successfully");
@@ -423,7 +422,7 @@ describe("DELETE /api/task/soft/:id", () => {
       .set("Authorization", `Bearer ${token}`);
 
     logger.debug(response.body);
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(404);
     expect(user._id).toBeDefined();
     expect(task._id).toBeDefined();
     expect(response.body.message).toBe("Task not found or already deleted");
@@ -451,7 +450,7 @@ describe("PATCH /api/task/status/:taskId", () => {
       });
 
     logger.debug(response.body);
-    expect(response.status).toBe(201);
+    expect(response.status).toBe(200);
     expect(user._id).toBeDefined();
     expect(task._id).toBeDefined();
     expect(response.body.message).toBe("Task status updated successfully");
@@ -557,7 +556,7 @@ describe("PATCH /api/task/restore/:taskId", () => {
       .set("Authorization", `Bearer ${token}`);
 
     logger.debug(response.body);
-    expect(response.status).toBe(201);
+    expect(response.status).toBe(200);
     expect(user._id).toBeDefined();
     expect(task.id).toBeDefined();
     expect(response.body.message).toBe("Task restored successfully");
@@ -1057,13 +1056,13 @@ describe("DELETE /api/task/hard/:taskId", () => {
 
   it("should be able hard delete task", async () => {
     const task = await createTask(user._id);
-
+    await softDeleteTask(task.id);
     const response = await supertest(web)
       .delete(`/api/task/hard/${task.id}`)
       .set("Authorization", `Bearer ${token}`);
 
     logger.debug(response.body);
-    expect(response.status).toBe(201);
+    expect(response.status).toBe(200);
     expect(user._id).toBeDefined();
     expect(task.id).toBeDefined();
     expect(response.body.message).toBe("Task deleted successfully");
@@ -1078,7 +1077,7 @@ describe("DELETE /api/task/hard/:taskId", () => {
     logger.debug(response.body);
     expect(response.status).toBe(404);
     expect(user._id).toBeDefined();
-    expect(response.body.message).toBe("Task not found or already deleted");
+    expect(response.body.message).toBe("Task not found or not in trash");
   });
 });
 

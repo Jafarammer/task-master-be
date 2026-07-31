@@ -3,6 +3,7 @@ import morgan from "morgan";
 import cors from "cors";
 import helmet from "helmet";
 import { CLIENT_HOST } from "../utils/env";
+import cookieParser from "cookie-parser";
 
 // routes
 import authRoutes from "../routes/auth.routes";
@@ -13,6 +14,7 @@ const web: Application = express();
 
 web.use(helmet());
 web.use(express.json());
+web.use(cookieParser());
 
 const allowedOrigins = ["http://localhost:5173", CLIENT_HOST].filter(
   Boolean,

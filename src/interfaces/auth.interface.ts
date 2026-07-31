@@ -40,3 +40,26 @@ export interface IRepositoryPayload {
   activationCode: string;
   is_active: boolean;
 }
+
+export interface ITokenPair {
+  accessToken: string;
+  refreshToken: string;
+}
+
+export interface AccessTokenPayload {
+  id: string;
+  email: string;
+  type: "access";
+}
+
+export interface RefreshTokenPayload {
+  id: string;
+  tokenId: string;
+  type: "refresh";
+}
+
+export interface CreateRefreshTokenParams {
+  userId: string;
+  tokenHash: string;
+  expiresAt: Date;
+}

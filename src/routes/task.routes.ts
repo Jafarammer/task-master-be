@@ -18,21 +18,21 @@ import {
 
 const router = Router();
 
-router.get("/", authToken, handleGetTask);
 router.get("/completed", authToken, handleGetTaskCompleted);
 router.get("/pending", authToken, handleGetTaskPending);
+router.get("/trash/statistics", authToken, handleGetTrashStatistics);
 router.get("/trash", authToken, handleGetTaskTrash);
+router.get("/detail/:id", authToken, handleGetDetailTask);
+router.get("/", authToken, handleGetTask);
 
+router.delete("/trash/all", authToken, handleDeleteAllTaskTrash);
 router.delete("/soft/:taskId", authToken, handleSoftDeleteTask);
 router.delete("/hard/:taskId", authToken, handleHardDeleteTask);
-router.delete("/trash/all", authToken, handleDeleteAllTaskTrash);
+
 router.patch("/restore/:taskId", authToken, handleRestoreTask);
 router.patch("/status/:taskId", authToken, handleTaskUpdateStatus);
 
 router.post("/", authToken, handleCreateTask);
-
-router.get("/trash/statistics", authToken, handleGetTrashStatistics);
-router.get("/detail/:id", authToken, handleGetDetailTask);
 router.put("/:id", authToken, handleUpdateTask);
 
 export default router;

@@ -1,6 +1,11 @@
 import { Request, Response } from "express";
 import { AuthRequest } from "../middleware/authMiddleware";
 import {
+  REFRESH_TOKEN_COOKIE_NAME,
+  refreshTokenCookieOptions,
+  clearRefreshTokenCookieOptions,
+} from "../app/cookie";
+import {
   registerValidation,
   loginValidation,
   changePasswordValidation,
@@ -8,6 +13,29 @@ import {
   resetPasswordValidation,
 } from "../validations/auth.validate";
 import * as authService from "../services/auth.service";
+
+export const handleRefreshToken = async (req: Request, res: Response) => {
+  const result = await authService.refreshAccessTokenService(
+    req.cookies?.["REFRESH_TOKEN_COOKIE_NAME"],
+  );
+
+  if (result.error) {
+    res.clearCookie(REFRESH_TOKEN_COOKIE_NAME, clearRefreshTokenCookieOptions);
+
+    return res.status(result.code).json({ message: result.message });
+  }
+
+  res.cookie(
+    REFRESH_TOKEN_COOKIE_NAME,
+    result.data!.refreshToken,
+    refreshTokenCookieOptions,
+  );
+
+  return res.status(result.code).json({
+    message: result.message,
+    accessToken: result.data!.accessToken,
+  });
+};
 
 export const handleLogin = async (req: Request, res: Response) => {
   const validated = loginValidation.safeParse(req.body);
@@ -19,13 +47,22 @@ export const handleLogin = async (req: Request, res: Response) => {
   }
   const result = await authService.loginUser(validated.data);
 
-  if (result.error) {
+  if (result.error || !result.data) {
     return res.status(result.code).json({ message: result.message });
   }
 
-  return res
-    .status(result.code)
-    .json({ accessToken: result.data!.token, message: result.message });
+  const { accessToken, refreshToken } = result.data;
+
+  res.cookie(
+    REFRESH_TOKEN_COOKIE_NAME,
+    refreshToken,
+    refreshTokenCookieOptions,
+  );
+
+  return res.status(result.code).json({
+    message: result.message,
+    accessToken,
+  });
 };
 
 export const handleRegister = async (req: Request, res: Response) => {

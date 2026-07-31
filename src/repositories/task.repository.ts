@@ -27,40 +27,24 @@ export const findActiveTaskByIdAndUserId = async (
   taskId: string,
   userId: string,
 ): Promise<ITask | null> => {
-  const task = await Task.findOne({
+  return Task.findOne({
     _id: taskId,
     user_id: userId,
     deleted_at: null,
-  })
-    .select(
-      "_id title description start_date end_date priority is_completed size",
-    )
-    .lean()
-    .exec();
-
-  if (!task) return null;
-
-  return task;
+  }).lean<ITask>();
 };
 
 export const findInactiveTaskByIdAndUserId = async (
   taskId: string,
   userId: string,
 ): Promise<ITask | null> => {
-  const task = await Task.findOne({
+  return Task.findOne({
     _id: taskId,
     user_id: userId,
     deleted_at: {
       $ne: null,
     },
-  })
-    .select("_id size")
-    .lean()
-    .exec();
-
-  if (!task) return null;
-
-  return task;
+  }).lean<ITask>();
 };
 
 export const updateTaskByIdAndUserId = async (
@@ -69,7 +53,7 @@ export const updateTaskByIdAndUserId = async (
   paylaod: ITaskPayload,
   size: number,
 ): Promise<ITask | null> => {
-  const updatedTask = await Task.findOneAndUpdate(
+  return Task.findOneAndUpdate(
     {
       _id: taskId,
       user_id: userId,
@@ -93,12 +77,8 @@ export const updateTaskByIdAndUserId = async (
     .select(
       "_id title description start_date end_date priority is_completed size",
     )
-    .lean()
+    .lean<ITask>()
     .exec();
-
-  if (!updatedTask) return null;
-
-  return updatedTask;
 };
 
 export const findTasksByUserId = async (

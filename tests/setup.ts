@@ -4,12 +4,18 @@ import { MongoMemoryServer } from "mongodb-memory-server";
 let mongoServer: MongoMemoryServer;
 
 beforeAll(async () => {
-  mongoServer = await MongoMemoryServer.create();
+  mongoServer = await MongoMemoryServer.create({
+    binary: {
+      version: "7.0.24",
+      arch: process.arch === "arm64" ? "arm64" : "x64",
+    },
+    instance: {
+      launchTimeout: 60_000,
+    },
+  });
 
-  const uri = mongoServer.getUri();
-
-  await mongoose.connect(uri);
-});
+  await mongoose.connect(mongoServer.getUri());
+}, 90_000);
 
 afterEach(async () => {
   const collections = mongoose.connection.collections;
@@ -20,7 +26,12 @@ afterEach(async () => {
 });
 
 afterAll(async () => {
-  await mongoose.connection.dropDatabase();
-  await mongoose.connection.close();
-  await mongoServer.stop();
-});
+  if (mongoose.connection.readyState !== 0) {
+    await mongoose.connection.dropDatabase();
+    await mongoose.disconnect();
+  }
+
+  if (mongoServer) {
+    await mongoServer.stop();
+  }
+}, 30_000);

@@ -5,6 +5,7 @@ import {
   IChangePasswordPayload,
   IForgotPasswordPayload,
   IResetPasswordPayload,
+  ITokenPair,
 } from "../interfaces/auth.interface";
 import { IServiceResponse } from "../interfaces/common.interface";
 import {
@@ -20,10 +21,22 @@ import {
   updataResetPassword,
   findUserByToken,
 } from "../repositories/auth.repository";
-import { createAccessToken } from "../utils/tokens";
+import {
+  createRefreshTokenRepository,
+  deleteAllUserRefreshTokensRepository,
+  deleteRefreshTokenRepository,
+  findRefreshTokenRepository,
+} from "../repositories/refresh-token.repository";
 import sendRegistrationEmail from "../mail/sendRegistrationEmail";
 import sendForgotPasswordEmail from "../mail/sendForgotPasswordEmail";
 import { CLIENT_HOST, VERIFICATION_HOST } from "../utils/env";
+import {
+  generateAccessToken,
+  generateTokenId,
+  hashToken,
+  verifyRefreshToken,
+  generateRefreshToken,
+} from "../utils/token";
 import validationId from "../helpers/validationId.helper";
 import {
   comparePassword,
@@ -32,9 +45,82 @@ import {
 } from "../helpers/auth.helper";
 import { successResponse, errorResponse } from "../helpers/response.helper";
 
+const REFRESH_TOKEN_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
+
+export const createTokenPairService = async (
+  userId: string,
+  email: string,
+): Promise<ITokenPair> => {
+  const tokenId = generateTokenId();
+  const accessToken = generateAccessToken(userId, email);
+  const refreshToken = generateRefreshToken(userId, tokenId);
+
+  const tokenHash = hashToken(refreshToken);
+
+  const expiresAt = new Date(Date.now() + REFRESH_TOKEN_DURATION_MS);
+
+  await createRefreshTokenRepository({ userId, tokenHash, expiresAt });
+
+  return {
+    accessToken,
+    refreshToken,
+  };
+};
+
+export const refreshAccessTokenService = async (
+  oldRefreshToken: string,
+): Promise<IServiceResponse<ITokenPair>> => {
+  try {
+    if (!oldRefreshToken) {
+      return errorResponse("Refresh token is required", 401);
+    }
+
+    const payload = verifyRefreshToken(oldRefreshToken);
+
+    if (!payload) {
+      return errorResponse("Refresh token is invalid or expired", 401);
+    }
+
+    const tokenHash = hashToken(oldRefreshToken);
+    const storedToken = await findRefreshTokenRepository(tokenHash);
+
+    if (!storedToken) {
+      return errorResponse("Refresh token not found or already used", 401);
+    }
+
+    const user = await findUserById(payload.id);
+
+    if (!user) {
+      await deleteRefreshTokenRepository(tokenHash);
+      return errorResponse("User not found", 404);
+    }
+
+    if (!user.is_active) {
+      await deleteRefreshTokenRepository(tokenHash);
+      return errorResponse("Please activate your account via email", 403);
+    }
+
+    await deleteRefreshTokenRepository(tokenHash);
+
+    const { accessToken, refreshToken } = await createTokenPairService(
+      user._id.toString(),
+      user.email,
+    );
+
+    return successResponse("Refresh token successfully", 200, {
+      accessToken,
+      refreshToken,
+    });
+  } catch (error: any) {
+    console.error("REFRESH TOKEN ERROR:", error);
+
+    return errorResponse("Internal server error", 500);
+  }
+};
+
 export const loginUser = async (
   payload: ILoginPayload,
-): Promise<IServiceResponse<{ token: string }>> => {
+): Promise<IServiceResponse<{ accessToken: string; refreshToken: string }>> => {
   try {
     const email = normalizeEmail(payload.email);
 
@@ -53,15 +139,14 @@ export const loginUser = async (
       return errorResponse("Email or password is invalid", 400);
     }
 
-    const accessToken = createAccessToken({
-      id: user._id.toString(),
-      email: user.email,
-    });
-
-    await cleatResetPasswordToken(user._id.toString());
+    const { accessToken, refreshToken } = await createTokenPairService(
+      user._id.toString(),
+      user.email,
+    );
 
     return successResponse(`Welcome ${user.full_name}`, 200, {
-      token: accessToken,
+      accessToken: accessToken,
+      refreshToken: refreshToken,
     });
   } catch (error: any) {
     console.error("LOGIN ERROR:", error);

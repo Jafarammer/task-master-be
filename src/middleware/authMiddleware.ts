@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
+
 import { IAccessPayload } from "../interfaces/auth.interface";
-import { JWT_SECRET } from "../utils/env";
+import { verifyAccessToken } from "../utils/token";
 
 export interface AuthRequest extends Request {
   user?: IAccessPayload;
@@ -12,24 +12,31 @@ export const authToken = (
   res: Response,
   next: NextFunction,
 ) => {
-  const authHeader = req.headers.authorization;
+  const authorization = req.headers.authorization;
 
-  if (!authHeader) {
-    return res.status(401).json({ message: "Unauthorized" });
+  if (!authorization) {
+    return res.status(401).json({
+      message: "Access token is required",
+    });
   }
-  const token = authHeader.split(" ")[1];
 
-  if (!token) {
-    return res.status(401).json({ message: "Invalid token format" });
+  const [type, token] = authorization.split(" ");
+
+  if (type !== "Bearer" || !token) {
+    return res.status(401).json({
+      message: "Invalid authorization format",
+    });
   }
 
   try {
-    const decode = jwt.verify(token, JWT_SECRET as string) as IAccessPayload;
+    const payload = verifyAccessToken(token);
 
-    req.user = decode;
+    req.user = payload;
 
-    next();
-  } catch (error) {
-    res.status(403).json({ message: "Invalid or expired token" });
+    return next();
+  } catch {
+    return res.status(401).json({
+      message: "Invalid or expired token",
+    });
   }
 };

@@ -46,9 +46,8 @@ describe("GET /api/profile", () => {
     const response = await supertest(web)
       .get("/api/profile")
       .set("Authorization", `Bearer token-invalid`);
-
     logger.debug(response.body);
-    expect(response.status).toBe(403);
+    expect(response.status).toBe(401);
     expect(response.body.message).toBe("Invalid or expired token");
   });
 
@@ -57,7 +56,7 @@ describe("GET /api/profile", () => {
 
     logger.debug(response.body);
     expect(response.status).toBe(401);
-    expect(response.body.message).toBe("Unauthorized");
+    expect(response.body.message).toBe("Access token is required");
   });
 });
 
@@ -81,7 +80,7 @@ describe("PATCH /api/profile", () => {
       });
 
     logger.debug(response.body);
-    expect(response.status).toBe(201);
+    expect(response.status).toBe(200);
     expect(user._id).toBeDefined();
     expect(response.body.message).toBe("Update profile successfully");
     expect(response.body.data.fullName).toBe("test");
@@ -100,7 +99,7 @@ describe("PATCH /api/profile", () => {
       });
 
     logger.debug(response.body);
-    expect(response.status).toBe(201);
+    expect(response.status).toBe(200);
     expect(user._id).toBeDefined();
     expect(response.body.message).toBe(
       "Verification email sent to your new email address",

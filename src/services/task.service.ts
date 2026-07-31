@@ -477,7 +477,7 @@ export const taskDetail = async (
     }
 
     return successResponse("Get task detail successfully", 200, {
-      id: taskFindId._id as string,
+      id: taskFindId._id.toString(),
       title: taskFindId.title,
       description: taskFindId.description,
       startDate: taskFindId.start_date?.toISOString().split("T")[0] ?? null,
