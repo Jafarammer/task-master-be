@@ -9,6 +9,7 @@ import {
   handleForgotPassword,
   handleResetPassword,
   handleRefreshToken,
+  handleLogout,
 } from "../controllers/auth.controller";
 
 import { authToken } from "../middleware/authMiddleware";
@@ -17,7 +18,7 @@ const router = Router();
 
 router.post("/login", handleLogin);
 router.post("/register", handleRegister);
-
+router.post("/logout", handleLogout);
 router.post("/refresh-token", handleRefreshToken);
 
 router.get("/activate", activateAccount);

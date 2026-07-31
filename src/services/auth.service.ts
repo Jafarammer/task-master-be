@@ -353,3 +353,21 @@ export const resetPassword = async (
     return errorResponse("Internal server error", 500);
   }
 };
+
+export const logOutUser = async (
+  refreshToken: string,
+): Promise<IServiceResponse> => {
+  try {
+    if (!refreshToken) {
+      return errorResponse("Refresh token is required", 401);
+    }
+    const hashedToken = hashToken(refreshToken);
+
+    await deleteRefreshTokenRepository(hashedToken);
+
+    return successResponse("Logout successfully", 200);
+  } catch (error: any) {
+    console.error("LOGOUT ERROR:", error);
+    return errorResponse("Internal server error", 500);
+  }
+};

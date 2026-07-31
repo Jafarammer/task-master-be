@@ -15,14 +15,16 @@ import {
 import * as authService from "../services/auth.service";
 
 export const handleRefreshToken = async (req: Request, res: Response) => {
-  const result = await authService.refreshAccessTokenService(
-    req.cookies?.["REFRESH_TOKEN_COOKIE_NAME"],
-  );
+  const refreshToken = req.cookies?.[REFRESH_TOKEN_COOKIE_NAME];
+
+  const result = await authService.refreshAccessTokenService(refreshToken);
 
   if (result.error) {
     res.clearCookie(REFRESH_TOKEN_COOKIE_NAME, clearRefreshTokenCookieOptions);
 
-    return res.status(result.code).json({ message: result.message });
+    return res.status(result.code).json({
+      message: result.message,
+    });
   }
 
   res.cookie(
@@ -153,5 +155,17 @@ export const handleResetPassword = async (req: Request, res: Response) => {
   if (result.error) {
     return res.status(result.code).json({ message: result.message });
   }
+  return res.status(result.code).json({ message: result.message });
+};
+
+export const handleLogout = async (req: Request, res: Response) => {
+  const refreshToken = req.cookies?.[REFRESH_TOKEN_COOKIE_NAME];
+
+  const result = await authService.logOutUser(refreshToken);
+
+  if (result.error) {
+    return res.status(result.code).json({ message: result.message });
+  }
+
   return res.status(result.code).json({ message: result.message });
 };
