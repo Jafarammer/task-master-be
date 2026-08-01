@@ -1,4 +1,5 @@
 import supertest from "supertest";
+import jwt from "jsonwebtoken";
 import { logger } from "../src/app/logging";
 import web from "../src/app/web";
 import {
@@ -7,6 +8,9 @@ import {
   loginUser,
   userResetToken,
   userResetTokenExpired,
+  deleteAllRefrestToken,
+  findUser,
+  findUserToken,
 } from "./test-utils";
 
 describe("Health Check", () => {
@@ -340,5 +344,227 @@ describe("POST /api/auth/reset-password", () => {
     expect(response.body.message).toBe(
       "New password and confirm password not match",
     );
+  });
+});
+
+describe("POST /api/auth/refresh-token", () => {
+  let agent: ReturnType<typeof supertest.agent>;
+  const loginPayload = {
+    email: "john@example.com",
+    password: "@Jhone123",
+  };
+  beforeEach(async () => {
+    agent = supertest.agent(web);
+    await createUserActive();
+  });
+
+  it("should refresh access token successfully", async () => {
+    const response = await agent.post("/api/auth/login").send(loginPayload);
+
+    logger.debug(response.body);
+
+    expect(response.status).toBe(200);
+    expect(response.body.accessToken).toBeDefined();
+    expect(response.headers["set-cookie"]).toBeDefined();
+
+    const oldAccessToken = response.body.accessToken;
+
+    const refreshResponse = await agent.post("/api/auth/refresh-token");
+
+    logger.debug(refreshResponse.body);
+
+    expect(refreshResponse.status).toBe(200);
+    expect(refreshResponse.body.message).toBe("Refresh token successfully");
+    expect(refreshResponse.body.accessToken).toBeDefined();
+    expect(refreshResponse.body.accessToken).not.toBe(oldAccessToken);
+    expect(typeof refreshResponse.body.accessToken).toBe("string");
+    expect(refreshResponse.headers["set-cookie"]).toBeDefined();
+
+    const cookies = refreshResponse.headers[
+      "set-cookie"
+    ] as unknown as string[];
+
+    expect(cookies.some((cookie) => cookie.startsWith("refreshToken="))).toBe(
+      true,
+    );
+    expect(cookies.some((cookie) => cookie.includes("HttpOnly"))).toBe(true);
+
+    const newAccessToken = refreshResponse.body.accessToken;
+
+    expect(newAccessToken).not.toBe(oldAccessToken);
+
+    const decodedToken = jwt.decode(newAccessToken);
+
+    expect(decodedToken).not.toBeNull();
+  });
+
+  it("should be able to access protected endpoint using new access token", async () => {
+    const loginResponse = await agent
+      .post("/api/auth/login")
+      .send(loginPayload);
+
+    logger.debug(loginResponse.body);
+
+    expect(loginResponse.status).toBe(200);
+    expect(loginResponse.body.accessToken).toBeDefined();
+    expect(loginResponse.body.message).toBe("Welcome John Doe");
+
+    const oldAccessToken = loginResponse.body.accessToken;
+
+    const refreshTokenResponse = await agent.post("/api/auth/refresh-token");
+
+    logger.debug(refreshTokenResponse.body);
+
+    expect(refreshTokenResponse.status).toBe(200);
+    expect(refreshTokenResponse.body.message).toBe(
+      "Refresh token successfully",
+    );
+    expect(refreshTokenResponse.body.accessToken).not.toBe(oldAccessToken);
+    expect(refreshTokenResponse.body.accessToken).toBeDefined();
+
+    const newAccessToken = refreshTokenResponse.body.accessToken;
+
+    const taskResponse = await agent
+      .get("/api/task")
+      .set("Authorization", `Bearer ${newAccessToken}`);
+
+    expect(taskResponse.status).toBe(200);
+  });
+
+  it("should return 401 when refresh token cookie is missing", async () => {
+    const response = await supertest(web).post("/api/auth/refresh-token");
+
+    logger.debug(response.body);
+    expect(response.status).toBe(401);
+    expect(response.body.message).toBe("Refresh token is required");
+  });
+
+  it("should reject invalid refresh token", async () => {
+    const response = await supertest(web)
+      .post("/api/auth/refresh-token")
+      .set("Cookie", "refreshToken=invalid-refresh-token");
+
+    logger.debug(response.body);
+
+    expect(response.status).toBe(401);
+    expect(response.body.message).toBe("Refresh token is invalid or expired");
+  });
+
+  it("should reject valid JWT that is not stored in database", async () => {
+    const loginResponse = await agent
+      .post("/api/auth/login")
+      .send(loginPayload);
+
+    logger.debug(loginResponse.body);
+
+    expect(loginResponse.status).toBe(200);
+
+    await deleteAllRefrestToken();
+
+    const refreshTokenResponse = await agent.post("/api/auth/refresh-token");
+
+    logger.debug(refreshTokenResponse.body);
+
+    expect(refreshTokenResponse.status).toBe(401);
+    expect(refreshTokenResponse.body.accessToken).toBeUndefined();
+    expect(refreshTokenResponse.body.message).toBe(
+      "Refresh token not found or already used",
+    );
+  });
+});
+
+describe("POST /api/auth/logout", () => {
+  let agent: ReturnType<typeof supertest.agent>;
+  const loginPayload = {
+    email: "john@example.com",
+    password: "@Jhone123",
+  };
+  beforeEach(async () => {
+    agent = supertest.agent(web);
+    await createUserActive();
+  });
+
+  it("should logout successfully", async () => {
+    const loginResponse = await agent
+      .post("/api/auth/login")
+      .send(loginPayload);
+
+    logger.debug(loginResponse.body);
+    expect(loginResponse.status).toBe(200);
+    expect(loginResponse.body.accessToken).toBeDefined();
+    expect(loginResponse.body.message).toBe("Welcome John Doe");
+
+    const logoutResponse = await agent.post("/api/auth/logout");
+
+    logger.debug(logoutResponse.body);
+    expect(logoutResponse.status).toBe(200);
+    expect(logoutResponse.body.message).toBe("Logout successfully");
+  });
+
+  it("should clear refresh token cookie", async () => {
+    const loginResponse = await agent
+      .post("/api/auth/login")
+      .send(loginPayload);
+
+    expect(loginResponse.status).toBe(200);
+
+    const logoutResponse = await agent.post("/api/auth/logout");
+
+    expect(logoutResponse.status).toBe(200);
+    expect(logoutResponse.headers["set-cookie"]).toBeDefined();
+
+    const cookies = logoutResponse.headers["set-cookie"] as unknown as string[];
+
+    const refreshTokenCookie = cookies.find((cookie) =>
+      cookie.startsWith("refreshToken="),
+    );
+
+    expect(refreshTokenCookie).toBeDefined();
+    expect(
+      refreshTokenCookie!.includes("refreshToken=;") ||
+        refreshTokenCookie!.includes("Max-Age=0") ||
+        refreshTokenCookie!.includes("Expires=Thu, 01 Jan 1970"),
+    ).toBe(true);
+  });
+
+  it("should delete refresh token from database", async () => {
+    const loginResponse = await agent
+      .post("/api/auth/login")
+      .send(loginPayload);
+    logger.debug(loginResponse);
+
+    expect(loginResponse.status).toBe(200);
+
+    const user = await findUser(loginPayload.email);
+
+    expect(user).not.toBeNull();
+
+    const tokenBeforeLogout = await findUserToken(user!.id);
+
+    expect(tokenBeforeLogout).not.toBeNull();
+
+    const logoutResponse = await agent.post("/api/auth/logout");
+
+    expect(logoutResponse.status).toBe(200);
+
+    const tokenAfterLogout = await findUserToken(user!.id);
+
+    expect(tokenAfterLogout).toBeNull();
+  });
+
+  it("should not be able to refresh token after logout", async () => {
+    const loginResponse = await agent
+      .post("/api/auth/login")
+      .send(loginPayload);
+    logger.debug(loginResponse.body);
+    expect(loginResponse.status).toBe(200);
+
+    const logoutResponse = await agent.post("/api/auth/logout");
+    logger.debug(logoutResponse.body);
+    expect(logoutResponse.status).toBe(200);
+
+    const refreshResponse = await agent.post("/api/auth/refresh-token");
+    expect(refreshResponse.status).toBe(401);
+    expect(refreshResponse.body.message).toBe("Refresh token is required");
   });
 });

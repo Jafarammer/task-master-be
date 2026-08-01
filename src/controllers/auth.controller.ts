@@ -167,5 +167,7 @@ export const handleLogout = async (req: Request, res: Response) => {
     return res.status(result.code).json({ message: result.message });
   }
 
+  res.clearCookie(REFRESH_TOKEN_COOKIE_NAME, clearRefreshTokenCookieOptions);
+
   return res.status(result.code).json({ message: result.message });
 };

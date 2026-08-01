@@ -2,6 +2,10 @@
 
 ## Endpoint : POST /api/auth/reset-password
 
+### Request Header:
+
+- Content-Type: application/json
+
 ### Request Body :
 
 ```json

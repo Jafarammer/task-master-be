@@ -41,6 +41,7 @@ export const generateAccessToken = (userId: string, email: string): string => {
     id: userId,
     email: email,
     type: "access",
+    jti: crypto.randomUUID(),
   };
 
   return jwt.sign(payload, ACCESS_SECRET, {

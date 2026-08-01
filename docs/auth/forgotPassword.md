@@ -2,6 +2,10 @@
 
 ## Endpoint : POST /api/auth/forgot-password
 
+### Request Header:
+
+- Content-Type: application/json
+
 ### Request Body :
 
 ```json

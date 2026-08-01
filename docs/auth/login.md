@@ -2,6 +2,10 @@
 
 ## Endpoint : /api/auth/login
 
+### Request Headers
+
+- Content-Type: application/json
+
 ### Request Body
 
 ```json

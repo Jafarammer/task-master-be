@@ -4,7 +4,7 @@ RESTful API for task management built with Express.js, TypeScript, MongoDB, JWT 
 
 ## Features
 
-- User Authentication (Register, Login, Account Activation)
+- User Authentication (Register, Login, Account Activation,Logout)
 - JWT Authorization
 - Task Management (CRUD)
 - Profile Management
@@ -30,6 +30,7 @@ RESTful API for task management built with Express.js, TypeScript, MongoDB, JWT 
 - Jest
 - Supertest
 - MongoDB Memory Server
+- Winston
 
 ## Installation
 

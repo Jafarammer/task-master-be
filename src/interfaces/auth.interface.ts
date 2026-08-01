@@ -50,6 +50,7 @@ export interface AccessTokenPayload {
   id: string;
   email: string;
   type: "access";
+  jti: string;
 }
 
 export interface RefreshTokenPayload {

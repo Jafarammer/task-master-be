@@ -1,5 +1,6 @@
 import User from "../src/models/user.model";
 import Task from "../src/models/task.model";
+import RefreshToken from "../src/models/refresh-token.model";
 import { Types } from "mongoose";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
@@ -126,4 +127,16 @@ export const updateStatusTask = async (taskId: string | Types.ObjectId) => {
   return Task.findByIdAndUpdate(taskId, {
     is_completed: true,
   });
+};
+
+export const deleteAllRefrestToken = async () => {
+  return await RefreshToken.deleteMany({});
+};
+
+export const findUser = async (email: string) => {
+  return await User.findOne({ email });
+};
+
+export const findUserToken = async (userId: string) => {
+  return await RefreshToken.findOne({ userId });
 };

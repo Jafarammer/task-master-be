@@ -1,8 +1,10 @@
+@baseUrl = http://localhost:8000/api
 @token = xxx
-@reset_password_toke = xxxxxxxx
+@reset_password_token = xxxxxxxx
+@refresh_cookie = xxx
 
 ### Register
-POST http://localhost:8000/api/auth/register
+POST {{baseUrl}}/auth/register
 Content-Type: application/json
 Accept: application/json
 
@@ -14,7 +16,8 @@ Accept: application/json
 }
 
 ### Login
-POST http://localhost:8000/api/auth/login
+# @name login
+POST {{baseUrl}}/auth/login
 Content-Type: application/json
 Accept: application/json
 
@@ -23,20 +26,34 @@ Accept: application/json
   "password": "@Jhondoe123"
 }
 
+### Save Login Response
+@token = {{login.response.body.accessToken}}
+@refresh_cookie = {{login.response.headers.Set-Cookie}}
+
+### Refresh Token
+# @name refresh
+POST {{baseUrl}}/auth/refresh-token
+Accept: application/json
+Cookie: {{refresh_cookie}}
+
+### Save New Access Token
+@token = {{refresh.response.body.accessToken}}
+@refresh_cookie = {{refresh.response.headers.Set-Cookie}}
+
 ### Change Password
-PATCH http://localhost:8000/api/auth/change-password
+PATCH {{baseUrl}}/auth/change-password
 Content-Type: application/json
 Accept: application/json
 Authorization: Bearer {{token}}
 
 {
-  "currentPassword":"@Jhondoe123",
-  "newPassword":"@Jhondoe321",
-  "confirmPassword":"@Jhondoe321"
+  "currentPassword": "@Jhondoe123",
+  "newPassword": "@Jhondoe321",
+  "confirmPassword": "@Jhondoe321"
 }
 
 ### Forgot Password
-POST http://localhost:8000/api/auth/forgot-password
+POST {{baseUrl}}/auth/forgot-password
 Content-Type: application/json
 Accept: application/json
 
@@ -45,12 +62,17 @@ Accept: application/json
 }
 
 ### Reset Password
-POST http://localhost:8000/api/auth/reset-password
+POST {{baseUrl}}/auth/reset-password
 Content-Type: application/json
 Accept: application/json
 
 {
-  "token": "{{reset_password_toke}}",
+  "token": "{{reset_password_token}}",
   "newPassword": "@Jhondoe321",
   "confirmPassword": "@Jhondoe321"
 }
+
+### Logout
+POST {{baseUrl}}/auth/logout
+Accept: application/json
+Cookie: {{refresh_cookie}}

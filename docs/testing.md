@@ -46,6 +46,8 @@ npm run test:coverage
 
 - User Registration
 - User Login
+- User Logout
+- Refresh Token
 - Account Activation
 - Forgot Password
 - Reset Password

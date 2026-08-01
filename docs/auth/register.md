@@ -2,6 +2,10 @@
 
 ## Endpoint : POST /api/auth/register
 
+### Request Header:
+
+- Content-Type: application/json
+
 ### Request Body :
 
 ```json
