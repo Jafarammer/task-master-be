@@ -172,13 +172,13 @@ export const registerUser = async (
 
     await sendRegistrationEmail({
       fullName: payload.fullName,
-      email: payload.email,
+      email: email,
       activationLink: activationLink,
     });
 
     await createUser({
       full_name: payload.fullName,
-      email: payload.email,
+      email: email,
       password: hashedPassword,
       activationCode: activationCode,
       is_active: false,
